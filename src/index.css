@@ -1,0 +1,217 @@
+/* Direction A ("Bullion") tokens — the single source of colour. See docs/DESIGN.md §2. */
+@import './styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-[color:var(--border)];
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-black bg-app-glow text-white font-sans antialiased;
+    background-attachment: fixed;
+    min-height: 100dvh;
+    margin: 0;
+  }
+
+  /* A single, consistent, always-visible focus ring. Never remove it. */
+  :focus-visible {
+    outline: 2px solid var(--fm-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* The native search clear button renders in the browser's own blue, which is off
+     palette and cannot be recoloured. Hide it — clearing by keyboard still works, and
+     mobile browsers don't render it at all. */
+  input[type='search']::-webkit-search-cancel-button,
+  input[type='search']::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Number inputs: hide spinners, they are unusable at touch size */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  /* Honour the OS setting globally; the app's own toggle adds .reduce-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  .reduce-motion *,
+  .reduce-motion *::before,
+  .reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@layer components {
+  /* The 480px phone frame. Everything lives inside it below the md breakpoint. */
+  .app-frame {
+    @apply mx-auto w-full max-w-app;
+  }
+
+  .card {
+    @apply rounded-lg border border-[color:var(--border)] p-5;
+    /* Alpha is written out rather than using Tailwind's `bg-surface/90` modifier:
+       `--surface` is now an alias (`var(--fm-surface-1)`, tokens.css) instead of v2's
+       literal hex, and Tailwind cannot compute an alpha channel through a var() it
+       can't resolve at build time. See docs/DESIGN.md §13.1. */
+    background-color: color-mix(in srgb, var(--surface) 90%, transparent);
+  }
+
+  .eyebrow {
+    @apply mb-2 inline-block text-xs font-bold uppercase tracking-[0.12em] text-gold-light;
+  }
+
+  /* Ambient grid, straight from v1 */
+  .ambient-grid {
+    background-image:
+      linear-gradient(rgba(240, 216, 121, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(240, 216, 121, 0.03) 1px, transparent 1px);
+    background-size: 38px 38px;
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 82%);
+    mask-image: linear-gradient(to bottom, black, transparent 82%);
+  }
+
+  /* One shared grain texture on the page background — kills the flat-plastic look on
+     large screens without touching content. DESIGN.md §3.5. */
+  .fm-grain::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Glassmorphism v2 — blur + gradient light-catch border + soft shadow, never blur alone.
+     DESIGN.md §3.6. Allowed on: tab bar, sidebar, top bar, sheets, dialogs, sticky bars,
+     the sync banner. Banned on any card holding a number, chart, food row, form or empty
+     state — glass costs clarity on data-dense surfaces. */
+  .fm-glass {
+    position: relative;
+    background: linear-gradient(160deg, rgba(38, 34, 26, 0.72), rgba(20, 19, 17, 0.86));
+    -webkit-backdrop-filter: blur(18px) saturate(118%);
+    backdrop-filter: blur(18px) saturate(118%);
+    box-shadow:
+      var(--fm-elev-2),
+      inset 0 1px 0 rgba(247, 245, 240, 0.06);
+  }
+  .fm-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      160deg,
+      rgba(240, 216, 121, 0.34),
+      rgba(240, 216, 121, 0.06) 42%,
+      rgba(247, 245, 240, 0.05)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  @supports not (backdrop-filter: blur(1px)) {
+    .fm-glass {
+      background: #161513;
+      background-color: #161513;
+    }
+  }
+
+  /* The responsive app shell grid: phone gets one column with a bottom tab bar drawn
+     outside the grid; md gets an 80px icon rail; lg+ gets a full 260px sidebar.
+     DESIGN.md §6.3. */
+  .fm-shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-block-size: 100dvh;
+  }
+  @media (min-width: 768px) {
+    .fm-shell {
+      grid-template-columns: 80px 1fr;
+    }
+  }
+  @media (min-width: 1024px) {
+    .fm-shell {
+      grid-template-columns: 260px 1fr;
+    }
+  }
+
+  /* The content grid every screen lays cards into. DESIGN.md §6.3.
+     `inline-size: 100%` is load-bearing: as a flex item this element's `margin-inline:
+     auto` (added at ≥1024 below) disables cross-axis stretch per the flexbox spec, so
+     without an explicit 100% it shrinks-to-fit its (empty) content instead of filling
+     the row before `max-inline-size` caps it — the classic "centered container" bug. */
+  .fm-content-grid {
+    display: grid;
+    inline-size: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+  @media (min-width: 768px) {
+    .fm-content-grid {
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 20px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .fm-content-grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 24px;
+      max-inline-size: 1100px;
+      margin-inline: auto;
+    }
+  }
+  @media (min-width: 1280px) {
+    .fm-content-grid {
+      max-inline-size: 1200px;
+    }
+  }
+  @media (min-width: 1536px) {
+    .fm-content-grid {
+      max-inline-size: 1320px;
+      gap: 32px;
+    }
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+  }
+}

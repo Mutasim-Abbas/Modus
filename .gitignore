@@ -1,0 +1,26 @@
+node_modules/
+dist/
+dev-dist/
+coverage/
+*.tsbuildinfo
+
+# Playwright (P6.1) run artifacts — the specs themselves live in e2e/ and are committed.
+playwright-report/
+test-results/
+
+# NOTE: ./drizzle (migrations, P2.1) is deliberately NOT ignored — docs/PLAN.md §2 requires
+# committed, reviewable SQL migration files, not generated-and-discarded output.
+
+# Secrets — the Anthropic API key belongs in Vercel env vars, never in the repo.
+.env
+.env.*
+!.env.example
+
+.vercel/
+.DS_Store
+*.local
+npm-debug.log*
+.eslintcache
+
+# Local tooling
+.claude/

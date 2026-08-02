@@ -1,0 +1,107 @@
+name: CI
+
+# This pipeline verifies; it never deploys. Vercel's own Git integration builds and
+# previews/promotes from the same commits (see docs/DEPLOY.md) — that is a separate,
+# manually-triggered path, not this workflow. No job here reads a secret: every
+# server-side test that would otherwise need DATABASE_URL runs against an embedded
+# PGlite Postgres instead (api/_lib/db/testDb.ts), and ANTHROPIC_API_KEY /
+# SESSION_PEPPER being unset is itself a tested, honest product state
+# (`sync_unconfigured` / `ai_unconfigured`), not a gap CI needs to route around.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      # `npm ci` needs a lockfile in sync with package.json; install is the safe
+      # cross-platform choice when the lockfile was generated on Windows.
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  e2e:
+    name: Playwright e2e (local preview)
+    runs-on: ubuntu-latest
+    # Independent of `verify` so a slow/flaky browser install never blocks the fast
+    # gate; both are still required checks on `main` once branch protection is set
+    # up (see docs/DEPLOY.md — that step is manual, outside this file).
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      # docs/TODO.md P6.1 (QA) has not landed any e2e/**/*.spec.ts files yet.
+      # An empty `e2e/` directory makes `playwright test` itself exit non-zero ("no
+      # tests found"), which is not a real regression — guard it explicitly so this
+      # job reports what is actually true (skipped, not passed, not failed) until
+      # specs exist. Once P6.1 lands specs this branch stops triggering and the run
+      # below becomes a real, failing-on-red gate like every other step in this file.
+      - name: Check for e2e specs
+        id: specs
+        run: |
+          if compgen -G "e2e/**/*.spec.ts" > /dev/null || compgen -G "e2e/**/*.test.ts" > /dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No e2e specs under ./e2e yet (docs/TODO.md P6.1). Skipping Playwright run — this is a gap, not a pass."
+          fi
+
+      - name: Cache Playwright browser binaries
+        if: steps.specs.outputs.found == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        if: steps.specs.outputs.found == 'true'
+        run: npx playwright install --with-deps chromium
+
+      # Builds the app and serves it with `vite preview` (playwright.config.ts's
+      # webServer block) — a local preview only. DATABASE_URL/ANTHROPIC_API_KEY/
+      # SESSION_PEPPER are unset here, same as `verify`; specs that exercise the
+      # sync_unconfigured / ai_unconfigured paths are exactly the ones this can
+      # legitimately cover. Specs that need a real Postgres or a real Vercel
+      # deployment are P6.1's job to mark DEFERRED, per docs/DEPLOY.md.
+      - name: Run Playwright specs
+        if: steps.specs.outputs.found == 'true'
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: steps.specs.outputs.found == 'true' && failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
