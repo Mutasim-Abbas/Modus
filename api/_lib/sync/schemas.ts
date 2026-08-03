@@ -1,7 +1,7 @@
 /**
  * Zod schemas for `api/sync/pull` and `api/sync/push` (`P2.3`).
  *
- * Two rules shape every schema here, both non-negotiable per `docs/TODO.md` P2.3:
+ * Two rules shape every schema here, both non-negotiable per the project plan P2.3:
  *
  * 1. **The server assigns every timestamp that governs sync ordering.** A push payload
  *    never carries a client `updatedAt`/`deletedAt` value — it carries a `deleted`

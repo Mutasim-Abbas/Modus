@@ -30,7 +30,7 @@ export interface ResolvedAuthDeps {
  * anywhere — a misconfiguration that looks completely healthy and quietly removes most of
  * the value of hashing the tokens at all.
  *
- * 32 characters is a floor, not a recommendation. `docs/DEPLOY.md` §2 tells the operator
+ * 32 characters is a floor, not a recommendation. the project plan §2 tells the operator
  * to generate 32 random BYTES (`randomBytes(32).toString('hex')` = 64 hex chars), and any
  * sane encoding of a real 32-byte secret clears this bound comfortably — hex is 64 chars,
  * base64 is 44. The check is deliberately on length alone: entropy cannot be measured

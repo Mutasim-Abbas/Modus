@@ -10,7 +10,7 @@ import {
 /**
  * POST /api/auth/logout-all — "log out everywhere". Revokes every live session row for
  * the authenticated user, including the one making this request, then clears this
- * device's cookie too. This is the property JWT sessions cannot give you (docs/PLAN.md
+ * device's cookie too. This is the property JWT sessions cannot give you (the project plan
  * §2) and the entire reason session state lives in Postgres: revocation is a real row
  * update, checked on every subsequent request via `authenticateSession`.
  */

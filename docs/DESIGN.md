@@ -1,7 +1,7 @@
 # FitMacro v3 — Design direction & design system
 
 **Owner:** design (task P1.1). **Status:** complete, ready to build against.
-**Audience:** the frontend work (P3.1–P3.5, P4.1–P4.2). Read `docs/PLAN.md` §5 first — this
+**Audience:** the frontend work (P3.1–P3.5, P4.1–P4.2). Read the project plan §5 first — this
 file is the detailed answer to those bounds.
 
 Everything here is buildable. Every colour is a hex. Every contrast ratio in this document was
@@ -16,7 +16,7 @@ severity 1.0) and the raw verdicts are pasted in §4.
 
 The frontend developer must not deviate from these without coming back to this document.
 
-1. **Legibility beats novelty.** `docs/PLAN.md` says real users. If a visual effect and a number
+1. **Legibility beats novelty.** the project plan says real users. If a visual effect and a number
    ever compete, the number wins. Every effect in here has an off-switch that leaves the app
    fully usable.
 2. **No glass, no blur, no gradient, no 3D behind any number or chart.** Glass is allowed on
@@ -45,7 +45,7 @@ The frontend developer must not deviate from these without coming back to this d
 
 ## 1. The three directions
 
-`docs/PLAN.md` §5 requires 2–3 named directions with full hex tokens, one recommended, and an
+the project plan §5 requires 2–3 named directions with full hex tokens, one recommended, and an
 argument if the gold-on-dark identity is replaced. Here they are. **Direction A is recommended
 and the rest of this document specifies it in full.** B and C are given with complete token sets
 so switching later is a token-file swap, not a redesign.
@@ -69,14 +69,14 @@ surface steps and one shadow scale; glass is used only on nav chrome, where the 
 under it is the point (§3.6).
 
 **Why it wins here.**
-- It is Mutasim's identity, built twice by him. `docs/PLAN.md` names it as *the* reference. There
+- It is Mutasim's identity, built twice by him. the project plan names it as *the* reference. There
   is no external reference that beats "the thing the owner already made and cares about".
 - Warm near-black is genuinely correct for this product: a PWA opened at 06:00 before a workout
   and at 23:00 after dinner. It is OLED-cheap and it does not glare.
 - Gold is a **narrow-hue** accent. That is a liability for charts (yellow collides with orange
   under every form of colour-blindness) and an asset for identity. Direction A resolves the
   tension by assigning gold to identity and giving data its own hues — which is exactly the
-  extension `docs/PLAN.md` §5 demands.
+  extension the project plan §5 demands.
 - It is the lowest-risk path for 317 existing tests and an existing component library: the
   base, surface and gold hexes are unchanged, so most of the migration is *additive*.
 
@@ -125,7 +125,7 @@ measurably calmer. It also reads more "instrument / telemetry", which suits the 
 
 **Why it is not recommended.** It quietly throws away the thing that makes FitMacro look like
 FitMacro. Gold on cool graphite is the default palette of every crypto dashboard and premium-tier
-SaaS upsell page — it is *close* to the failure mode `docs/PLAN.md` forbids, just with a warmer
+SaaS upsell page — it is *close* to the failure mode the project plan forbids, just with a warmer
 accent. And it costs the whole existing surface token set for a benefit only visible on a large
 monitor.
 
@@ -164,7 +164,7 @@ outdoors, at a desk — the exact conditions where a near-black UI is hardest to
 low brightness in sunlight. Every major competitor is light-first for that reason. A light FitMacro
 would also be *more* differentiated in a portfolio full of dark dashboards, not less.
 
-**Why it still loses.** It discards the identity Mutasim built twice and that `docs/PLAN.md` names
+**Why it still loses.** It discards the identity Mutasim built twice and that the project plan names
 as the reference, in exchange for a benefit (outdoor legibility) that a future light theme could
 deliver additively. It also inverts every existing component in the repo, which is the largest
 possible change surface right before three security audits. Offered honestly, not recommended.
@@ -203,9 +203,9 @@ Everything from here down specifies Direction A.
 
 ### 2.0 One theme, honestly
 
-v3 ships **dark only**. `user_settings.theme` exists in the schema (`docs/PLAN.md` §3) and is
+v3 ships **dark only**. `user_settings.theme` exists in the schema (the project plan §3) and is
 reserved for a future light theme; until that theme exists **the UI must not show a theme
-control**. This follows the same rule that cut `Settings.units` in `docs/PLAN.md` §4: the app never
+control**. This follows the same rule that cut `Settings.units` in the project plan §4: the app never
 implies a capability it lacks. Write `theme: 'dark'` and leave it alone.
 
 `color-scheme: dark` goes on `:root` so form controls, scrollbars and the URL bar match.
@@ -771,7 +771,7 @@ complete enough to build without a library.
 
 ## 5. Information architecture
 
-`docs/PLAN.md` §4 bounds: max 5 primary destinations, Progress must be primary, Plan/History/
+the project plan §4 bounds: max 5 primary destinations, Progress must be primary, Plan/History/
 Profile may live under *More*. Final IA:
 
 ### Primary (phone bottom tab bar — exactly 5)
@@ -1168,7 +1168,7 @@ Continue without an account                 ← always present
   send email."*
 - Errors are **field-level**, `--fm-danger` 1.5 px border + `--fm-danger` message with an
   `AlertCircle` icon, `aria-describedby`, and the field keeps focus.
-- Server-side "email already registered" must not leak (`docs/PLAN.md` §2 forbids enumeration).
+- Server-side "email already registered" must not leak (the project plan §2 forbids enumeration).
   UI copy for that case: the generic **"We couldn't create that account. Check your details and
   try again."** — one message for every failure class.
 
@@ -1199,7 +1199,7 @@ forget your password. We can't email you a reset link.
 Email + password + `Sign in` + `Use a recovery code` link + `Continue without an account`.
 One generic failure message, identical for wrong email and wrong password:
 **"That email and password don't match."** No timing difference is visible to the user; the
-server handles the timing side (`docs/PLAN.md` §2).
+server handles the timing side (the project plan §2).
 Rate-limited state: the button disables and shows **"Too many attempts. Try again in 4:32."**
 with a live countdown and `aria-live="polite"`.
 
@@ -1234,7 +1234,7 @@ Type DELETE to confirm   [        ]
 ```
 Counts are real, fetched before the screen renders (skeleton while loading). The
 "data on this device stays" sentence is required — it is the single most reassuring true fact and
-it directly implements `docs/PLAN.md` §1 rule 3.
+it directly implements the project plan §1 rule 3.
 
 ---
 
@@ -1349,7 +1349,7 @@ Decide later — keep working offline   ← LinkButton
    ```
    Read-only, with an explicit sentence: *"FitMacro keeps the newer change. After merging you
    can edit any of these on the Log screen."* This is honest about last-write-wins
-   (`docs/PLAN.md` §2) instead of hiding it.
+   (the project plan §2) instead of hiding it.
 7. **Progress state** while committing: the choice cards freeze (`aria-busy="true"`), a
    determinate progress bar shows "Merging 214 of 532…", and the screen cannot be navigated away
    from. Interruption (tab close, network drop) must leave the local store untouched — the local
@@ -1569,7 +1569,7 @@ truncate gracefully:
 
 ### The honest reading of the budget
 
-`docs/PLAN.md` §5 caps this at **≤ ~150 KB gzipped**, off the first-paint path, disabled under
+the project plan §5 caps this at **≤ ~150 KB gzipped**, off the first-paint path, disabled under
 reduced motion, with a static fallback, and *never* required to read a number. A tree-shaken
 Three.js core alone lands in the ~110–150 KB gzipped range before you add React Three Fiber and
 drei — so **R3F/Three.js does not fit this budget** and is out. The
@@ -1689,7 +1689,7 @@ boxShadow: { e1:'…', e2:'…', e3:'…', accent:'…' },   /* §3.4 verbatim *
 Enable Tailwind's logical-property utilities (`ps-`, `pe-`, `ms-`, `me-`, `start-`, `end-`,
 `border-s`, `rounded-s`) — these are built in; the work is banning the physical ones in ESLint.
 
-### 13.3 Suggested order of implementation (matches `docs/TODO.md` P3.1)
+### 13.3 Suggested order of implementation (matches the project plan P3.1)
 
 1. `tokens.css` + Tailwind map + the v2 aliases. Nothing visual changes yet; tests stay green.
 2. `AppShell` → `.fm-shell` grid, sidebar + icon rail + tab bar, `/more` route, `/progress` route

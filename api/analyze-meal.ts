@@ -1,5 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { analyzeMeal, AnalyzeFailure } from './_lib/analyze.js';
+import { analyzeMeal, AnalyzeFailure, createGroqClient, type GroqClient } from './_lib/analyze.js';
 import { errorResponse, jsonResponse } from './_lib/http.js';
 import { clientIpFrom, RateLimiter } from './_lib/rate-limit.js';
 import { validateAnalyzeRequest } from './_lib/validate.js';
@@ -10,28 +9,25 @@ import { validateAnalyzeRequest } from './_lib/validate.js';
  * The contract lives in docs/API.md and the client (src/lib/api.ts) is already built
  * against it; this function serves that contract exactly.
  *
- * The single most important behaviour: when ANTHROPIC_API_KEY is unset this returns
+ * The single most important behaviour: when GROQ_API_KEY is unset this returns
  * 503 { error: "ai_unconfigured" }. It never throws, never 500s and never fabricates
  * a result — the app ships before the key exists and stays fully usable without it.
  */
 
 /**
  * Give the model room to think and respond without the platform killing us mid-flight.
- * vercel.json allows 60s; we bail at 50s so the failure is ours to shape, and retry
- * once at most because each retry costs a full vision call against that budget.
+ * vercel.json allows 60s; we bail at 50s so the failure is ours to shape.
  */
 const REQUEST_TIMEOUT_MS = 50_000;
-const MAX_RETRIES = 1;
 
 export interface Handlerdeps {
   /** Injectable so tests never construct a real client or touch the network. */
-  createClient: (apiKey: string) => Anthropic;
+  createClient: (apiKey: string) => GroqClient;
   limiter: RateLimiter;
 }
 
 const defaultDeps: Handlerdeps = {
-  createClient: (apiKey) =>
-    new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: MAX_RETRIES }),
+  createClient: (apiKey) => createGroqClient(apiKey),
   // Module scope: survives across invocations that reuse this instance. See rate-limit.ts
   // for the honest limits of that.
   limiter: new RateLimiter(),
@@ -39,8 +35,44 @@ const defaultDeps: Handlerdeps = {
 
 /** Reads the key without ever logging or returning it. Empty/whitespace counts as unset. */
 function readApiKey(): string | null {
-  const key = process.env.ANTHROPIC_API_KEY?.trim();
+  const key = process.env.GROQ_API_KEY?.trim();
   return key ? key : null;
+}
+
+/**
+ * A signal that aborts on timeout, or when the caller disconnects.
+ *
+ * Built from AbortController rather than `AbortSignal.timeout`/`AbortSignal.any`: those
+ * are missing in some runtimes (jsdom, where this file's tests run), and a helper that
+ * throws on construction would surface as an opaque 500 instead of the timeout it is.
+ *
+ * `cancel()` must run on every path, or a pending timer keeps the invocation alive.
+ */
+function timeoutSignal(
+  requestSignal: AbortSignal | null,
+  ms: number,
+): { signal: AbortSignal; cancel: () => void } {
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    controller.abort(new DOMException('Upstream timed out.', 'TimeoutError'));
+  }, ms);
+
+  const onAbort = (): void => {
+    controller.abort(requestSignal?.reason as unknown);
+  };
+
+  if (requestSignal) {
+    if (requestSignal.aborted) onAbort();
+    else requestSignal.addEventListener('abort', onAbort, { once: true });
+  }
+
+  return {
+    signal: controller.signal,
+    cancel: () => {
+      clearTimeout(timer);
+      requestSignal?.removeEventListener('abort', onAbort);
+    },
+  };
 }
 
 /** Maps a typed analysis failure onto the contract's status codes. */
@@ -99,11 +131,18 @@ export function createHandler(deps: Handlerdeps = defaultDeps) {
       const { imageBase64, mediaType } = validation.value;
       const client = deps.createClient(apiKey);
 
-      const result = await analyzeMeal(client, {
-        imageBase64,
-        mediaType,
-        ...(request.signal ? { signal: request.signal } : {}),
-      });
+      // The SDK used to own this timeout; with a plain fetch it has to be explicit, or a
+      // hung upstream would burn the whole platform budget and return a generic gateway
+      // error we do not control. Combined with the request's own signal so a client that
+      // disconnects still aborts the upstream call.
+      const { signal, cancel } = timeoutSignal(request.signal ?? null, REQUEST_TIMEOUT_MS);
+
+      let result;
+      try {
+        result = await analyzeMeal(client, { imageBase64, mediaType, signal });
+      } finally {
+        cancel();
+      }
 
       // Note: the image is never echoed back.
       return jsonResponse(result, 200);

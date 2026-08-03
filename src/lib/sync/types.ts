@@ -1,5 +1,5 @@
 /**
- * Shared types for the sync engine (`docs/API.md`'s "Sync API" section, `docs/TODO.md`
+ * Shared types for the sync engine (`docs/API.md`'s "Sync API" section, the project plan
  * P4.2). Kept dependency-free (no React) so `src/lib/sync/*` stays pure and testable
  * without a DOM.
  */

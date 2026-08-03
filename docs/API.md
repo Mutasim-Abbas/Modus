@@ -23,7 +23,7 @@ implemented and tested today, or explicitly marked otherwise.
 > `SESSION_PEPPER` are set** — every `api/auth/*` route returns
 > `503 { "error": "sync_unconfigured" }` if either is missing, the same pattern as
 > `ai_unconfigured`, and the app must stay fully usable in guest mode regardless
-> (`docs/PLAN.md` §2).
+> (the project plan §2).
 >
 > **`api/sync/*` status: implemented (`P2.3`).** `api/sync/pull.ts` and `api/sync/push.ts`
 > (+ `api/_lib/sync/*`) exist and are exercised the same way auth is — against a real
@@ -177,7 +177,7 @@ Covered by `src/lib/api.test.ts` and `src/features/scan/ScanScreen.test.tsx`.
 
 # Auth API (`api/auth/*`) — `P2.2`
 
-Built per `docs/PLAN.md` §2 and `docs/TODO.md` P2.2. No auth SaaS — first-party,
+Built per the project plan §2 and the project plan P2.2. No auth SaaS — first-party,
 DB-backed sessions, so every line of it is auditable and every session is genuinely
 revocable (the reason it is **not** JWT).
 
@@ -278,7 +278,7 @@ is ever created, and the loser's unique violation is caught and reported as the 
 
 ## Account recovery — no email in v3
 
-`docs/PLAN.md` §2: v3 sends no email at all. The recovery code shown once at signup is
+the project plan §2: v3 sends no email at all. The recovery code shown once at signup is
 the **entire** recovery mechanism. It is single-use and **regenerable by construction**:
 every successful `recovery-redeem` call rotates it — the code just used stops verifying,
 and a brand-new one is returned in that same response, shown once, exactly like signup.
@@ -432,7 +432,7 @@ in this codebase; there is no other code path that spreads a raw row into JSON.
 Delta pull/push of the six synced tables (`docs/DB.md` §2.6): `profiles`, `entries`,
 `weights`, `custom_foods`, `favourites`, `user_settings`. Client-generated UUIDs
 (`entries`/`weights`/`custom_foods`), soft deletes, last-write-wins per row
-(`docs/PLAN.md` §2). Both routes require a valid session — sync has no meaning for a
+(the project plan §2). Both routes require a valid session — sync has no meaning for a
 guest — and both return `503 { "error": "sync_unconfigured" }` before touching anything
 else if `DATABASE_URL` or `SESSION_PEPPER` is unset, identically to `api/auth/*`.
 
@@ -837,7 +837,7 @@ below for why, and what actually bounds abuse today.
 **There is no `db.transaction()` wrapping a push batch, and this is a real, deliberate,
 documented gap — not an oversight and not silently claimed away.**
 `@neondatabase/serverless`'s HTTP driver (`neon-http`) — chosen specifically in
-`docs/PLAN.md` §2 to avoid serverless connection-pool exhaustion, the classic
+the project plan §2 to avoid serverless connection-pool exhaustion, the classic
 Postgres-on-Lambda failure mode — has **no transaction support at all**
 (`db.transaction()` throws "No transactions support in neon-http driver," verified
 directly against `node_modules/drizzle-orm/neon-http/session.js`, the identical gap
@@ -890,7 +890,7 @@ one) — narrower than "all or nothing," honestly described instead of glossed o
   whichever push reaches the server **later** wins outright — the earlier write is not
   merged field-by-field, and it is not kept anywhere queryable once the later one lands
   (it is gone, overwritten, the same as any other `UPDATE`). This is a deliberate,
-  documented trade-off (`docs/PLAN.md` §2): per-row LWW is the honest, cheap, correct
+  documented trade-off (the project plan §2): per-row LWW is the honest, cheap, correct
   choice for small independent records like a single food-log entry, and the
   alternative (field-level merge, or CRDTs) is real engineering cost this project does
   not need for the shape of data involved. The place this surfaces to a real person is

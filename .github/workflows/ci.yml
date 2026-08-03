@@ -1,10 +1,10 @@
 name: CI
 
 # This pipeline verifies; it never deploys. Vercel's own Git integration builds and
-# previews/promotes from the same commits (see docs/DEPLOY.md) — that is a separate,
+# previews/promotes from the same commits (see the project plan) — that is a separate,
 # manually-triggered path, not this workflow. No job here reads a secret: every
 # server-side test that would otherwise need DATABASE_URL runs against an embedded
-# PGlite Postgres instead (api/_lib/db/testDb.ts), and ANTHROPIC_API_KEY /
+# PGlite Postgres instead (api/_lib/db/testDb.ts), and GROQ_API_KEY /
 # SESSION_PEPPER being unset is itself a tested, honest product state
 # (`sync_unconfigured` / `ai_unconfigured`), not a gap CI needs to route around.
 
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     # Independent of `verify` so a slow/flaky browser install never blocks the fast
     # gate; both are still required checks on `main` once branch protection is set
-    # up (see docs/DEPLOY.md — that step is manual, outside this file).
+    # up (see the project plan — that step is manual, outside this file).
     steps:
       - uses: actions/checkout@v4
 
@@ -61,7 +61,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      # docs/TODO.md P6.1 (QA) has not landed any e2e/**/*.spec.ts files yet.
+      # the project plan P6.1 (QA) has not landed any e2e/**/*.spec.ts files yet.
       # An empty `e2e/` directory makes `playwright test` itself exit non-zero ("no
       # tests found"), which is not a real regression — guard it explicitly so this
       # job reports what is actually true (skipped, not passed, not failed) until
@@ -74,7 +74,7 @@ jobs:
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No e2e specs under ./e2e yet (docs/TODO.md P6.1). Skipping Playwright run — this is a gap, not a pass."
+            echo "::notice::No e2e specs under ./e2e yet (the project plan P6.1). Skipping Playwright run — this is a gap, not a pass."
           fi
 
       - name: Cache Playwright browser binaries
@@ -89,11 +89,11 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # Builds the app and serves it with `vite preview` (playwright.config.ts's
-      # webServer block) — a local preview only. DATABASE_URL/ANTHROPIC_API_KEY/
+      # webServer block) — a local preview only. DATABASE_URL/GROQ_API_KEY/
       # SESSION_PEPPER are unset here, same as `verify`; specs that exercise the
       # sync_unconfigured / ai_unconfigured paths are exactly the ones this can
       # legitimately cover. Specs that need a real Postgres or a real Vercel
-      # deployment are P6.1's job to mark DEFERRED, per docs/DEPLOY.md.
+      # deployment are P6.1's job to mark DEFERRED, per the project plan.
       - name: Run Playwright specs
         if: steps.specs.outputs.found == 'true'
         run: npm run test:e2e

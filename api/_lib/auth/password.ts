@@ -42,7 +42,7 @@ function scryptAsync(password: string, salt: Buffer, keylen: number, options: Sc
   });
 }
 
-/** OWASP-recommended argon2id parameters (docs/PLAN.md §2). */
+/** OWASP-recommended argon2id parameters (the project plan §2). */
 const ARGON2_OPTIONS = {
   memoryCost: 19_456,
   timeCost: 2,

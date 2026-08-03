@@ -33,7 +33,7 @@ import { toNumeric } from '../_lib/sync/rows.js';
  *
  * **No `db.transaction()` — deliberately, and documented, not silently absent.** See
  * "Atomicity" in docs/API.md: `@neondatabase/serverless`'s HTTP driver (`neon-http`,
- * chosen specifically to avoid serverless connection-pool exhaustion — docs/PLAN.md §2)
+ * chosen specifically to avoid serverless connection-pool exhaustion — the project plan §2)
  * has no transaction support, the same gap `docs/API.md`'s Auth section already
  * documents for `api/auth/change-password.ts`. Every write here is upsert-shaped and
  * therefore safely retryable — the atomicity guarantee this endpoint actually provides

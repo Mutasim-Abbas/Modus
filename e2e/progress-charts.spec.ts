@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { logFoodFromSearch, onboard, realErrors, stubUnconfiguredBackend, watchErrors } from './support/app';
 
 /**
- * docs/PLAN.md §8.5: "weight + macro history render as real charts from real logged
+ * the project plan §8.5: "weight + macro history render as real charts from real logged
  * data; empty states show when there is none." Both halves, in a real browser — a chart
  * library rendering nothing at all is invisible to jsdom.
  *

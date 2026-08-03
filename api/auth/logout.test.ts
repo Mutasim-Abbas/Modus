@@ -61,7 +61,7 @@ describe('logout — revokes the session, replay fails', () => {
     expect(logoutResponse.headers.get('Set-Cookie')).toContain('Max-Age=0');
 
     // The exact same cookie, replayed, must now fail — this is what "logout invalidates
-    // the row" means (docs/TODO.md P2.2 acceptance criterion).
+    // the row" means (the project plan P2.2 acceptance criterion).
     const after = await meHandler(req('/api/auth/me', 'GET', { cookie }));
     expect(after.status).toBe(401);
   });

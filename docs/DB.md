@@ -5,7 +5,7 @@ Owner: `backend-developer` (P2.1). Source of truth for the schema is
 Mutasim's explicit instruction that the reasoning be written down, not just the SQL.
 If this document and the schema ever disagree, the schema is what runs — file a fix here.
 
-Read `docs/PLAN.md` §2 (stack) and §3 (bounding sketch) first. This doc goes deeper than
+Read the project plan §2 (stack) and §3 (bounding sketch) first. This doc goes deeper than
 that sketch in several places and says so inline wherever it deviates.
 
 ---
@@ -64,10 +64,10 @@ for anything that affects ordering or conflict resolution:
   will never send a client-supplied `updated_at`" (true today, and `P2.2`/`P2.3`'s job
   to keep true) — the trigger means that even if a future bug in the API layer forwards
   a client value, the database still refuses to honour it. Last-write-wins sync
-  (`docs/PLAN.md` §2) is only as trustworthy as this guarantee.
+  (the project plan §2) is only as trustworthy as this guarantee.
 - The one deliberate exception is `entries.day` and `weights.day` (plain `date`, no
   time zone) and `entries.logged_at`: these are **domain data the user controls on
-  purpose** — backdating to an earlier day is a real feature (`docs/TODO.md` P3.2), not
+  purpose** — backdating to an earlier day is a real feature (the project plan P3.2), not
   a clock to defend against. They are never used for sync ordering or conflict
   resolution; `updated_at` is what LWW compares.
 
@@ -91,7 +91,7 @@ Two different UUID strategies are used, deliberately:
   Neon's free tier runs). These rows are only ever created server-side, so there is no
   reason for the client to mint the id.
 - `entries.id`, `weights.id`, `custom_foods.id`: `uuid` **with no default**. The id is
-  **client-generated** (UUIDv7-style per `docs/PLAN.md` §2), because these rows must be
+  **client-generated** (UUIDv7-style per the project plan §2), because these rows must be
   creatable fully offline, and re-pushing the same id must be an idempotent upsert, not
   a duplicate insert — that's `P2.3`'s job, but the schema is what makes it possible.
 - `favourites` has no `id` column at all — see §4.6.
@@ -101,9 +101,9 @@ Two different UUID strategies are used, deliberately:
 - **Six sync tables** (`profiles`, `entries`, `weights`, `custom_foods`, `favourites`,
   `user_settings`) are **soft-deleted**: `deleted_at timestamptz`, nullable. A sync
   pull has to be able to tell "this row was deleted since your last cursor" apart from
-  "this row was never touched," and only a tombstone can do that (`docs/PLAN.md` §2,
+  "this row was never touched," and only a tombstone can do that (the project plan §2,
   "Sync model").
-- **`users` is hard-deleted.** `docs/PLAN.md` §4.1 is explicit: "delete account (real
+- **`users` is hard-deleted.** the project plan §4.1 is explicit: "delete account (real
   deletion, not a flag)." There is no `deleted_at` on `users`. Deleting the row is what
   cascades to every owned row (§4.1) — a real `DELETE`, not a flag flip, is what makes
   that cascade actually happen at the database level rather than needing every future
@@ -130,7 +130,7 @@ food names, session user-agent strings) is plain `text`, obviously not an enum c
 
 ### 2.6 Every synced table's non-negotiable trio
 
-Per `docs/TODO.md` P2.1: `profiles`, `entries`, `weights`, `custom_foods`,
+Per the project plan P2.1: `profiles`, `entries`, `weights`, `custom_foods`,
 `favourites` and `user_settings` **each** have `updated_at`, `deleted_at`, and a
 `(user_id, updated_at)` btree index. This is what lets `P2.3`'s pull endpoint be one
 query shape reused six times — `WHERE user_id = $1 AND updated_at > $2` — rather than
@@ -163,10 +163,10 @@ The account row. One per person; the login identifier is `email`.
 | Column | Type | Why |
 | --- | --- | --- |
 | `id` | `uuid`, PK, `gen_random_uuid()` | Server-assigned identity; every other table's `user_id` points here. |
-| `email` | `text`, not null | The login identifier. `email_verified` exists but v3 sends no email (`docs/PLAN.md` §2, "Account recovery") — always `false` today, kept honest rather than removed, since a future Brevo integration is the documented upgrade path. |
+| `email` | `text`, not null | The login identifier. `email_verified` exists but v3 sends no email (the project plan §2, "Account recovery") — always `false` today, kept honest rather than removed, since a future Brevo integration is the documented upgrade path. |
 | `email_verified` | `boolean`, default `false` | See above. |
 | `password_hash` | `text`, not null | argon2id hash (`@node-rs/argon2`, `P2.2`). Never selected into an API response — that's a `P2.2`/audit concern, not enforceable at the schema layer, and is called out explicitly so it isn't forgotten. |
-| `recovery_code_hash` | `text`, not null | argon2id hash of the one-time recovery code shown at signup (`docs/PLAN.md` §2). |
+| `recovery_code_hash` | `text`, not null | argon2id hash of the one-time recovery code shown at signup (the project plan §2). |
 | `created_at`, `updated_at` | `timestamptz`, default `now()` | Audit trail. Not part of sync — no client ever reads another user's account row, and a user's own account metadata isn't currently surfaced as a syncable "record" the way their data is. |
 
 **No `deleted_at`.** Account deletion is real (§2.4); the row is `DELETE`d and the
@@ -176,7 +176,7 @@ cascade (§4.1 cascades below) does the rest inside one transaction.
 
 - `UNIQUE (email)` — `users_email_key`. One account per email.
 - `CHECK (email = lower(email))` — `users_email_lowercase`. **Deviation from
-  `docs/PLAN.md` §3's sketch**, which wrote `email citext unique`. `citext` needs a
+  the project plan §3's sketch**, which wrote `email citext unique`. `citext` needs a
   Postgres extension (`CREATE EXTENSION citext`), which is one more thing that has to
   be enabled on whatever database this ends up on (Neon today, PGlite in tests) and one
   more thing to verify rather than assume. Storing the email pre-lowercased and
@@ -199,13 +199,13 @@ device/browser, not to the user's data.
 | --- | --- | --- |
 | `id` | `uuid`, PK | Row identity; not the cookie value. |
 | `user_id` | `uuid`, FK → `users.id` `ON DELETE CASCADE` | Row ownership. |
-| `token_hash` | `text`, not null, unique | Hex-encoded `HMAC-SHA256(token, SESSION_PEPPER)`. The raw opaque 256-bit token (`docs/PLAN.md` §2) is **never** stored — only its keyed hash. `text` storing hex, not `bytea`: the installed `drizzle-orm@0.45.2` ships no `bytea` pg-core column type at all (checked directly against `node_modules/drizzle-orm/pg-core/columns/`), and hex `text` is trivially indexable/comparable at a storage cost (2x the raw 32 bytes) that is irrelevant at this row count. |
+| `token_hash` | `text`, not null, unique | Hex-encoded `HMAC-SHA256(token, SESSION_PEPPER)`. The raw opaque 256-bit token (the project plan §2) is **never** stored — only its keyed hash. `text` storing hex, not `bytea`: the installed `drizzle-orm@0.45.2` ships no `bytea` pg-core column type at all (checked directly against `node_modules/drizzle-orm/pg-core/columns/`), and hex `text` is trivially indexable/comparable at a storage cost (2x the raw 32 bytes) that is irrelevant at this row count. |
 | `created_at` | `timestamptz` | When the session was created. |
 | `last_seen_at` | `timestamptz` | Bumped by `P2.2`'s auth middleware on each authenticated request — this is what "sliding 30-day expiry" slides against. |
 | `expires_at` | `timestamptz` | The sliding expiry itself, pushed forward on activity. |
-| `absolute_expires_at` | `timestamptz` | Hard 90-day cap, set once at creation, never extended — bounds how long a stolen-but-still-used token stays valid even under continuous activity (`docs/PLAN.md` §2). |
+| `absolute_expires_at` | `timestamptz` | Hard 90-day cap, set once at creation, never extended — bounds how long a stolen-but-still-used token stays valid even under continuous activity (the project plan §2). |
 | `user_agent` | `text`, nullable | For a future "your devices" list in account settings — a modern, low-cost feature the row shape already supports. |
-| `ip_hash` | `text`, not null | Hashed at session creation with the same function as `auth_attempts.key` — **never the raw IP** (`docs/TODO.md` P2.1 non-negotiable). |
+| `ip_hash` | `text`, not null | Hashed at session creation with the same function as `auth_attempts.key` — **never the raw IP** (the project plan P2.1 non-negotiable). |
 | `revoked_at` | `timestamptz`, nullable | Set on logout / logout-everywhere / password-change rotation. A session with `revoked_at` set must never authenticate again even if `expires_at` is still in the future — `P2.2`'s lookup must check `revoked_at IS NULL AND expires_at > now() AND absolute_expires_at > now()` together, not `expires_at` alone. |
 
 **Indexes:**
@@ -232,14 +232,14 @@ secret itself" — this is not a decorative check.
 
 ### 4.3 `auth_attempts`
 
-Postgres-backed rate limiting, per-IP and per-account (`docs/PLAN.md` §2 — replacing
+Postgres-backed rate limiting, per-IP and per-account (the project plan §2 — replacing
 the in-memory limiter in `api/_lib/rate-limit.ts` for anything security-relevant).
 
 | Column | Type | Why |
 | --- | --- | --- |
 | `id` | `uuid`, PK | Row identity. |
 | `key` | `text`, not null | The rate-limited identifier: a hashed IP when `scope = 'ip'`, a lowercased email when `scope = 'account'`. |
-| `scope` | enum `('ip', 'account')` | **Refinement of `docs/PLAN.md` §3's sketch**, which had a single `kind` column holding `ip\|email`. Splitting into `scope` (which kind of key) and `action` (what was attempted) makes the sliding-window query (`WHERE key = ? AND scope = ? AND action = ? AND created_at > ?`) precise without string-parsing a combined field, and makes "throttle logins per-account" and "throttle logins per-IP" two clean, independently-tunable counters instead of one. |
+| `scope` | enum `('ip', 'account')` | **Refinement of the project plan §3's sketch**, which had a single `kind` column holding `ip\|email`. Splitting into `scope` (which kind of key) and `action` (what was attempted) makes the sliding-window query (`WHERE key = ? AND scope = ? AND action = ? AND created_at > ?`) precise without string-parsing a combined field, and makes "throttle logins per-account" and "throttle logins per-IP" two clean, independently-tunable counters instead of one. |
 | `action` | enum `('login', 'signup', 'password_change', 'recovery_redeem')` | What was attempted — lets signup abuse and login brute-force be throttled independently, which they should be (very different legitimate-use velocities). |
 | `success` | `boolean`, default `false` | Recorded per attempt so `P2.2` can choose to only count *failures* toward a lockout while still counting *all* attempts toward a coarser velocity check — that policy choice belongs to `P2.2`, not this schema, but the column is what makes it possible. |
 | `created_at` | `timestamptz`, default `now()` | The only timestamp this table needs — it's an append-only log, not a synced/editable record. |
@@ -259,7 +259,7 @@ look like a 64-hex-char hash. `schema.test.ts` proves this rejects a raw dotted-
 IP outright.
 
 **Deliberately no foreign key to `users`.** This is the one documented exception to
-"deleting a user cascades to every row they own" (`docs/TODO.md` P2.1's own wording).
+"deleting a user cascades to every row they own" (the project plan P2.1's own wording).
 Two independent reasons, both real:
 
 1. A login attempt can target an email that was **never** registered — there is no
@@ -312,7 +312,7 @@ in `AppState.days`. Synced. Client-generated id (§2.3).
 | --- | --- | --- |
 | `id` | `uuid`, PK, no default | Client-generated; makes an offline-created entry and its eventual sync-push idempotent by id (`P2.3`). |
 | `user_id` | `uuid`, FK → `users.id` `ON DELETE CASCADE` | Ownership. |
-| `day` | `date`, not null | The calendar day this entry is logged against, in the timezone the client already resolved via `lib/date.ts`. **Not server-derived** — backdating to an arbitrary past day is an intended feature (`docs/TODO.md` P3.2), so this is domain data the user chose, not a clock to defend (§2.1). |
+| `day` | `date`, not null | The calendar day this entry is logged against, in the timezone the client already resolved via `lib/date.ts`. **Not server-derived** — backdating to an arbitrary past day is an intended feature (the project plan P3.2), so this is domain data the user chose, not a clock to defend (§2.1). |
 | `name`, `grams`, `kcal`, `protein`, `carbs`, `fat` | `text` / `numeric` | Mirrors `LogEntry` field-for-field; macros as `numeric` (§2.2), never `float`. |
 | `meal` | enum `('breakfast','lunch','dinner','snack')` | Mirrors `types.ts`'s `MealSlot`. |
 | `source` | enum `('food-db','scan','manual')` | Mirrors `types.ts`'s `EntrySource` — the honesty label the UI already shows for how an entry got its numbers. |
@@ -362,7 +362,7 @@ Body-weight log. Synced. Client-generated id.
 
 - `(user_id, updated_at)` — `weights_user_updated_idx`. Sync delta pull.
 - `UNIQUE (user_id, day) WHERE deleted_at IS NULL` — `weights_user_day_live_key`. One
-  **live** weigh-in per user per day is the domain rule from `docs/PLAN.md` §3's
+  **live** weigh-in per user per day is the domain rule from the project plan §3's
   sketch. The index is **partial** on purpose: if the user deletes today's weight and
   logs a new one, the tombstoned row must not permanently occupy that day — verified
   directly in `schema.test.ts` (`allows a new live weight for the same day once the
@@ -380,7 +380,7 @@ Synced. Client-generated id.
 | `id` | `uuid`, PK, no default | Same reasoning as `entries.id`. |
 | `user_id` | `uuid`, FK → `users.id` `ON DELETE CASCADE` | Ownership. |
 | `name`, `category`, `kcal`, `protein`, `carbs`, `fat` | mirrors `Food` | `category` is the `food_category` enum (§2.5), the exact 9-value union from `types.ts`'s `FoodCategory`, including the two multi-word/`&` values (`'fats & nuts'`, `'turkish & middle eastern'`) — Postgres enum labels handle arbitrary strings fine. |
-| `common_portions` | `jsonb`, default `'[]'` | `[{ label, grams }]`. `jsonb`, not a join table: the list is small, never independently queried (no "find all foods with a 200 g portion" feature exists or is planned), and the "modern capabilities where they help" guidance in `docs/PLAN.md` points exactly at this kind of shape. |
+| `common_portions` | `jsonb`, default `'[]'` | `[{ label, grams }]`. `jsonb`, not a join table: the list is small, never independently queried (no "find all foods with a 200 g portion" feature exists or is planned), and the "modern capabilities where they help" guidance in the project plan points exactly at this kind of shape. |
 | `updated_at`, `deleted_at` | see §2.6 | |
 
 **Not stored:** a `per` column. `Food['per']` in `types.ts` is a fixed literal `100` —
@@ -402,10 +402,10 @@ and `CHECK (jsonb_typeof(common_portions) = 'array')` — a database-level guara
 this column is always a JSON array, never an object or a scalar, so `P2.3`/the client
 never has to defensively type-check its shape on the way out.
 
-**Deliberately not added: full-text search.** `docs/PLAN.md`'s "modern capabilities"
+**Deliberately not added: full-text search.** the project plan's "modern capabilities"
 guidance mentions full-text search as a general option; it is **not** added here (no
 `tsvector` column, no GIN index) because nothing in scope queries it — the only search
-surface in `docs/TODO.md`'s v3 plan is `src/lib/search.ts`, entirely client-side, over
+surface in the project plan's v3 plan is `src/lib/search.ts`, entirely client-side, over
 data already synced down. Adding a server-side search index nothing calls would be
 exactly the "speculative abstraction" the project's own working rules reject.
 
@@ -441,12 +441,12 @@ One row per user. Synced.
 | Column | Type | Why |
 | --- | --- | --- |
 | `user_id` | `uuid`, PK, FK → `users.id` `ON DELETE CASCADE` | 1:1 with the account, same shape as `profiles`. |
-| `locale` | enum `('en', 'ar')`, default `'en'` | The two languages actually in scope for v3 (`docs/TODO.md` P3.5 — English + Arabic, RTL). |
+| `locale` | enum `('en', 'ar')`, default `'en'` | The two languages actually in scope for v3 (the project plan P3.5 — English + Arabic, RTL). |
 | `reduced_motion` | `boolean`, default `false` | Mirrors `types.ts`'s `Settings.reducedMotion`. |
 | `updated_at`, `deleted_at` | see §2.6 | |
 
-**Deliberately NOT included: `theme`.** `docs/PLAN.md` §3's bounding sketch lists a
-`theme` column. It is cut here, on purpose, for the **identical reason** `docs/PLAN.md`
+**Deliberately NOT included: `theme`.** the project plan §3's bounding sketch lists a
+`theme` column. It is cut here, on purpose, for the **identical reason** the project plan
 §4 already cut `Settings.units: 'metric'` from the client type: there is exactly one
 theme in this codebase today. A `theme` column with nothing to hold but one constant
 value would be precisely the "a type stub implying an unbuilt capability is the same
@@ -455,7 +455,7 @@ a deliberate deviation from the sketch, not an oversight — recorded here, and 
 comment on `userSettings` in `schema.ts`, so it's visible rather than silently dropped.
 Add it back in a real migration alongside the UI feature that needs it.
 
-**Also NOT included: `Settings.units`.** `docs/PLAN.md` §4 already cut this from the
+**Also NOT included: `Settings.units`.** the project plan §4 already cut this from the
 client type entirely (dead single-value union); there is nothing to sync, so there is
 nothing to store.
 
@@ -466,7 +466,7 @@ query shape across all six synced tables" reasoning as `profiles` (§4.4).
 
 ## 5. Cascades — the full picture, and the one exception
 
-`docs/TODO.md` P2.1's acceptance criterion: **"deleting a user cascades to every row
+the project plan P2.1's acceptance criterion: **"deleting a user cascades to every row
 they own, proven by a test, not asserted."** Every foreign key to `users.id` in this
 schema is declared `ON DELETE CASCADE`:
 
@@ -497,7 +497,7 @@ conscious trade-off between "delete everything this user owns" and "don't let ac
 deletion reset an attacker's clock," resolved in favour of the latter because
 `auth_attempts` rows contain no data more sensitive than "this email/IP attempted this
 action at this time" — not the kind of personal data the "real deletion" promise in
-`docs/PLAN.md` §4.1 is about.
+the project plan §4.1 is about.
 
 ---
 

@@ -17,7 +17,7 @@ import {
  * unset — the real state of this machine (the project notes: no Neon project exists and
  * none may be created).
  *
- * Covers docs/PLAN.md §8.2 (first half: the phone works with the network off),
+ * Covers the project plan §8.2 (first half: the phone works with the network off),
  * §8.4 (guest mode fully functional, both features degrade honestly) and §8.8 (both
  * viewports — the two Playwright projects run every one of these twice, at 390 px and
  * 1440 px).

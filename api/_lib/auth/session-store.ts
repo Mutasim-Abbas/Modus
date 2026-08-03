@@ -116,7 +116,7 @@ export async function revokeSessionByToken(db: Db, pepper: string, token: string
 /**
  * Logout-everywhere / password-change rotation: revokes every live session for a user.
  * Used standalone for "logout everywhere" and as the first half of password-change
- * rotation (docs/TODO.md P2.2: "rotation on password change").
+ * rotation (the project plan P2.2: "rotation on password change").
  */
 export async function revokeAllSessions(db: Db, userId: string): Promise<void> {
   await db

@@ -10,8 +10,8 @@ import { logFoodFromSearch, onboard, readStorage, realErrors, STORE_KEY, watchEr
  * hold forbids creating one, so `api/auth/*` and `api/sync/*` are fulfilled by
  * `e2e/support/fakeSync.ts` against the response shapes in `docs/API.md`. These specs
  * prove the **client** works end to end across two real browser contexts. They prove
- * NOTHING about the deployed backend — docs/PLAN.md §8.2 stays ⚠️ for that reason, and
- * the sign-off in docs/PLAN.md §8 says so.
+ * NOTHING about the deployed backend — the project plan §8.2 stays ⚠️ for that reason, and
+ * the sign-off in the project plan §8 says so.
  */
 
 const BANANA = 'Banana, fruit, 89 kcal per 100 g';

@@ -2,7 +2,7 @@
  * The one and only place a `users` row is turned into a client-facing shape. Every
  * route that returns a user goes through this — it is the enforcement point for
  * "password hash and recovery hash never appear in any response or log"
- * (docs/TODO.md P2.2 non-negotiable), by construction: there is no code path that
+ * (the project plan P2.2 non-negotiable), by construction: there is no code path that
  * spreads the raw row into a response.
  */
 

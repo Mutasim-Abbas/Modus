@@ -21,7 +21,7 @@
 -- and the JavaScript `Date` bit-for-bit equal on every engine, which is what the compound
 -- `(updated_at, id)` cursor already assumes.
 --
--- No backfill statement: there is no deployed database yet (docs/TODO.md publish hold), so
+-- No backfill statement: there is no deployed database yet (the project plan publish hold), so
 -- there are no rows to correct — and an `UPDATE` here would re-fire this very trigger and
 -- rewrite real history with `now()`. If this ever ships to a database that already holds
 -- rows, correct them with the trigger disabled, in a separate reviewed migration.

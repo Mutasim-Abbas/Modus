@@ -7,14 +7,14 @@ other devices.
 
 Built by **Mutasim Abbas** — BSc Software Engineering, Istanbul Atlas University.
 
-> ### Status: v3 is built and running locally. It has never been deployed.
-> Nothing in this repository has been committed, pushed, or published, and there is no
-> live URL. A **publish hold** is in force at the owner's request — the project is being
-> prepared to ship, not shipped. Everything described below has been exercised against a
-> local production build (`npm run build` + `npm run preview`).
+> ### Status: live at **[fitmacro.vercel.app](https://fitmacro.vercel.app)**
+> Running on Vercel with a Neon Postgres database, so guest mode, accounts and cross-device
+> sync all work. Everything described below has also been exercised against a local
+> production build (`npm run build` + `npm run preview`).
 >
-> The backend (`api/`) is written and tested, but **only against an in-process Postgres
-> (PGlite)** — no hosted database has ever run it. See
+> The automated backend test suite still runs against an **in-process Postgres (PGlite)**
+> rather than the hosted database, so behaviour that depends on the differences between the
+> two is verified in production by hand, not by the suite. See
 > [Known limitations](#known-limitations).
 
 ---
@@ -83,7 +83,7 @@ breaks the app.
 
 | Variable | Enables | Missing → |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | the AI meal scan | `503 ai_unconfigured`; Scan disables itself |
+| `GROQ_API_KEY` | the AI meal scan | `503 ai_unconfigured`; Scan disables itself |
 | `DATABASE_URL` + `SESSION_PEPPER` | accounts and cloud sync | `503 sync_unconfigured`; accounts UI is hidden entirely |
 
 `.env` is gitignored; only `.env.example` is committed. No key is ever read by the browser
@@ -117,7 +117,7 @@ and the exact number of rows a destructive choice would remove.
 ### Three things you should know before creating an account
 
 These are deliberate trade-offs, documented in
-[the internal security audit](./the internal security audit) §5. They are written here because a
+the internal security audit §5. They are written here because a
 trade-off nobody tells you about is just a hidden defect.
 
 1. **Someone who knows your email can lock you out for up to 15 minutes.** FitMacro limits
@@ -144,7 +144,7 @@ trade-off nobody tells you about is just a hidden defect.
    control — the per-account limit (keyed on the submitted email, which no header can
    forge) is what still holds. Anyone deploying FitMacro somewhere other than Vercel must
    revisit `clientIpFrom` in `api/_lib/rate-limit.ts` first. This is also stated as a
-   platform prerequisite in [`docs/DEPLOY.md`](./docs/DEPLOY.md). (Finding F-14.)
+   platform prerequisite in the internal project notes. (Finding F-14.)
 
 ### There is no password-reset email
 
@@ -220,9 +220,7 @@ api/
   _lib/                 validation, rate limiting, sessions, row serialisation
 drizzle/                committed SQL migrations
 e2e/                    Playwright specs (see Tests)
-legacy/                 v1, preserved untouched
-docs/                   BRIEF, PLAN, TODO, DESIGN, API, DB, DEPLOY,
-                        SECURITY-AUDIT, RESUME
+docs/                   DESIGN, API, DB
 ```
 
 ## Security posture
@@ -238,11 +236,11 @@ docs/                   BRIEF, PLAN, TODO, DESIGN, API, DB, DEPLOY,
 - No `dangerouslySetInnerHTML`, no `innerHTML`, no `eval` anywhere in application code.
 - The service worker never caches `/api/`, so an authenticated response cannot be served
   from cache to the next person using the browser.
-- The built `dist/` contains no `ANTHROPIC_API_KEY`, `DATABASE_URL` or `SESSION_PEPPER` —
+- The built `dist/` contains no `GROQ_API_KEY`, `DATABASE_URL` or `SESSION_PEPPER` —
   checked, not assumed.
 
 Three security passes are written up in full, including what was tried and *failed* to
-break, in [the internal security audit](./the internal security audit).
+break, in the internal security audit.
 
 ## PWA & offline
 
@@ -284,13 +282,16 @@ deployed backend.
 
 Stated here rather than discovered later:
 
-- **No live backend has ever run.** Every `api/` result comes from PGlite (in-process
-  Postgres), never Neon. Behaviour that depends on the differences between the two cannot
-  be confirmed until a real Postgres exists.
-- **The two whole-dataset adoption paths don't record the rows they adopt as synced**, so
-  those rows can be re-pushed on later cycles. No data loss, but it is not fixed.
-- **A rejected `duplicate_day` row retries forever.** It no longer *claims* to be synced,
-  but nothing clears it. Deferred, deliberately.
+- **The automated backend suite never touches the hosted database.** Every `api/` result in
+  the test suite comes from PGlite (in-process Postgres), not Neon. The deployed stack was
+  verified by hand — sign up, read the session back, pull sync state, delete the account —
+  but the internal security audit F-15 concerns a PGlite/Neon difference the suite structurally
+  cannot cover.
+- **F-18 is open** (MEDIUM): the two whole-dataset adoption paths don't record the rows
+  they adopt as synced, so those rows can be re-pushed on later cycles. No data loss, but
+  it is not fixed. See the internal security audit.
+- **A rejected `duplicate_day` row retries forever.** It no longer *claims* to be synced
+  (F-17), but nothing clears it. Deferred, deliberately.
 - **`loggedAt` is lost on a synced entry.** The server sends it as an ISO string; the
   client parses it as a number and falls back to `0`, so an entry that arrives by sync
   shows "logged 1 Jan 1970". Reproduced by an e2e test that is marked as an expected

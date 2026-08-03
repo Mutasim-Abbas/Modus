@@ -17,7 +17,7 @@
  *   even if application code has a bug — see docs/DB.md "Server-assigned time".
  * - Six tables are the sync surface (profiles, entries, weights, custom_foods,
  *   favourites, user_settings): each carries `updated_at`, `deleted_at` and a
- *   `(user_id, updated_at)` index, per docs/TODO.md P2.1's non-negotiables.
+ *   `(user_id, updated_at)` index, per the project plan P2.1's non-negotiables.
  */
 
 import { sql } from 'drizzle-orm';
@@ -91,7 +91,7 @@ export const users = pgTable(
     recoveryCodeHash: text('recovery_code_hash').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-    // No deleted_at: account deletion is real deletion (docs/PLAN.md §4.1), not a flag.
+    // No deleted_at: account deletion is real deletion (the project plan §4.1), not a flag.
   },
   (t) => [
     uniqueIndex('users_email_key').on(t.email),
@@ -198,7 +198,7 @@ export const profiles = pgTable(
   },
   (t) => [
     // (user_id, updated_at) is required uniformly across every synced table by
-    // docs/TODO.md P2.1 so P2.3's pull query is one code path, not six. On a 1-row-per-
+    // the project plan P2.1 so P2.3's pull query is one code path, not six. On a 1-row-per-
     // user table this is nearly free and mostly redundant with the primary key, but it
     // keeps that promise literally true and costs nothing measurable at this scale.
     index('profiles_user_updated_idx').on(t.userId, t.updatedAt),
@@ -279,7 +279,7 @@ export const weights = pgTable(
   },
   (t) => [
     index('weights_user_updated_idx').on(t.userId, t.updatedAt),
-    // One live weigh-in per day is the domain rule (docs/PLAN.md §3). Partial so a
+    // One live weigh-in per day is the domain rule (the project plan §3). Partial so a
     // tombstoned entry frees the day for a new one instead of permanently blocking it.
     uniqueIndex('weights_user_day_live_key')
       .on(t.userId, t.day)
@@ -369,7 +369,7 @@ export const userSettings = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     locale: localeEnum('locale').notNull().default('en'),
     reducedMotion: boolean('reduced_motion').notNull().default(false),
-    // NOTE: docs/PLAN.md §3's bounding sketch also lists a `theme` column. It is
+    // NOTE: the project plan §3's bounding sketch also lists a `theme` column. It is
     // deliberately cut here, for the identical reason PLAN.md §4 cut
     // `Settings.units: 'metric'`: there is no second theme in this codebase, so a
     // `theme` column today would be exactly the "type stub implying a capability that

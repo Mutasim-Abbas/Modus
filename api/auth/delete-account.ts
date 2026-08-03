@@ -11,7 +11,7 @@ import { deleteAccountSchema, parseJsonBody } from '../_lib/auth/schemas.js';
 import { authenticateSession, clearSessionCookieHeader } from '../_lib/auth/session-store.js';
 
 /**
- * POST /api/auth/delete-account — real deletion, not a flag (docs/PLAN.md §4.1).
+ * POST /api/auth/delete-account — real deletion, not a flag (the project plan §4.1).
  * Requires the current password, same defense-in-depth reasoning as change-password: a
  * live session alone must not be enough to destroy the account.
  *

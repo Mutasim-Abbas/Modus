@@ -1,27 +1,54 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { describe, expect, it, vi } from 'vitest';
-import { AnalyzeFailure, analyzeMeal, normalizeModelOutput, toAnalyzeFailure } from './analyze.js';
+import {
+  AnalyzeFailure,
+  analyzeMeal,
+  createGroqClient,
+  failureForStatus,
+  normalizeModelOutput,
+  stripCodeFence,
+  toAnalyzeFailure,
+} from './analyze.js';
 import { PNG_BASE64 } from './fixtures.js';
 
 /**
- * A stand-in for the SDK client. No network, no key — the real client is never
- * constructed in tests.
+ * Provider: Groq's OpenAI-compatible endpoint, called with plain `fetch`. Every test
+ * injects a fake `fetch`, so the real network is never touched and no key exists.
+ *
+ * The `normalizeModelOutput` block below is unchanged from the Anthropic implementation
+ * on purpose: it is provider-agnostic, it is the layer that makes an untrusted model
+ * response safe, and a provider swap is exactly when you want that coverage untouched.
  */
-function fakeClient(create: ReturnType<typeof vi.fn>): Anthropic {
-  return { messages: { create } } as unknown as Anthropic;
+
+/** A response shaped like an OpenAI-compatible chat completion. */
+function chatResponse(payload: unknown, finishReason = 'stop'): Response {
+  return jsonOk({
+    choices: [{ finish_reason: finishReason, message: { content: JSON.stringify(payload) } }],
+  });
 }
 
-/** A message shaped like the SDK returns for a structured-output call. */
-function modelMessage(payload: unknown, stopReason = 'end_turn'): unknown {
+/** A completion whose text content is supplied verbatim (for fence/garbage cases). */
+function rawResponse(text: string, finishReason = 'stop'): Response {
+  return jsonOk({ choices: [{ finish_reason: finishReason, message: { content: text } }] });
+}
+
+function jsonOk(body: unknown): Response {
   return {
-    stop_reason: stopReason,
-    content: [{ type: 'text', text: JSON.stringify(payload) }],
-  };
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve(body),
+  } as Response;
 }
 
-/** An error that passes `instanceof` for an SDK class without its constructor args. */
-function sdkError<T>(ctor: new (...args: never[]) => T): T {
-  return Object.create(ctor.prototype) as T;
+function jsonStatus(status: number): Response {
+  return {
+    ok: false,
+    status,
+    json: () => Promise.resolve({ error: { message: 'upstream said no' } }),
+  } as Response;
+}
+
+function clientWith(fetchImpl: ReturnType<typeof vi.fn>) {
+  return createGroqClient('test-key-never-real', fetchImpl as unknown as typeof fetch);
 }
 
 const input = { imageBase64: PNG_BASE64, mediaType: 'image/png' } as const;
@@ -131,46 +158,67 @@ describe('normalizeModelOutput', () => {
   });
 });
 
-describe('analyzeMeal', () => {
-  it('sends the request shape Opus 4.8 requires', async () => {
-    const create = vi.fn().mockResolvedValue(modelMessage({ items: [], note: '' }));
-    await analyzeMeal(fakeClient(create), input);
-
-    const body = create.mock.calls[0]?.[0] as Record<string, unknown>;
-    expect(body.model).toBe('claude-opus-4-8');
-    expect(body.max_tokens).toBe(16_000);
-    // Adaptive is the only "on" mode; budget_tokens would 400.
-    expect(body.thinking).toEqual({ type: 'adaptive' });
-    expect(body).not.toHaveProperty('budget_tokens');
-    // These three 400 on Opus 4.8.
-    expect(body).not.toHaveProperty('temperature');
-    expect(body).not.toHaveProperty('top_p');
-    expect(body).not.toHaveProperty('top_k');
-    // Structured outputs live under output_config, not the deprecated output_format.
-    expect(body).not.toHaveProperty('output_format');
-    expect(body.output_config).toMatchObject({ format: { type: 'json_schema' } });
+describe('stripCodeFence', () => {
+  it('unwraps a ```json fence a model added despite being told not to', () => {
+    expect(stripCodeFence('```json\n{"items":[]}\n```')).toBe('{"items":[]}');
+    expect(stripCodeFence('```\n{"items":[]}\n```')).toBe('{"items":[]}');
   });
 
-  it('puts the image block before the text block', async () => {
-    const create = vi.fn().mockResolvedValue(modelMessage({ items: [], note: '' }));
-    await analyzeMeal(fakeClient(create), input);
+  it('leaves bare JSON untouched', () => {
+    expect(stripCodeFence('  {"items":[]}  ')).toBe('{"items":[]}');
+  });
+});
 
-    const body = create.mock.calls[0]?.[0] as {
-      messages: { content: { type: string; source?: { data: string; media_type: string } }[] }[];
+describe('analyzeMeal', () => {
+  it('sends the request shape Groq requires', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(chatResponse({ items: [], note: '' }));
+    await analyzeMeal(clientWith(fetchImpl), input);
+
+    const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.groq.com/openai/v1/chat/completions');
+    expect(init.method).toBe('POST');
+
+    const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+    expect(body.model).toBe('qwen/qwen3.6-27b');
+    expect(body.max_tokens).toBe(8_192);
+    // json_object, not a provider-specific json_schema mode: see the note in analyze.ts.
+    expect(body.response_format).toEqual({ type: 'json_object' });
+  });
+
+  it('sends the key as a bearer token and nowhere else', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(chatResponse({ items: [], note: '' }));
+    await analyzeMeal(clientWith(fetchImpl), input);
+
+    const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBe('Bearer test-key-never-real');
+    // The key must never leak into the URL, where it would land in logs and referrers.
+    expect(url).not.toContain('test-key-never-real');
+    expect(String(init.body)).not.toContain('test-key-never-real');
+  });
+
+  it('puts the image before the text, as a data URL', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(chatResponse({ items: [], note: '' }));
+    await analyzeMeal(clientWith(fetchImpl), input);
+
+    const init = fetchImpl.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(init.body)) as {
+      messages: { role: string; content: unknown }[];
     };
-    const content = body.messages[0]?.content;
-    expect(content?.[0]?.type).toBe('image');
-    expect(content?.[0]?.source).toEqual({
-      type: 'base64',
-      media_type: 'image/png',
-      data: PNG_BASE64,
-    });
-    expect(content?.[1]?.type).toBe('text');
+
+    expect(body.messages[0]?.role).toBe('system');
+    const content = body.messages[1]?.content as {
+      type: string;
+      image_url?: { url: string };
+    }[];
+    expect(content[0]?.type).toBe('image_url');
+    expect(content[0]?.image_url?.url).toBe(`data:image/png;base64,${PNG_BASE64}`);
+    expect(content[1]?.type).toBe('text');
   });
 
   it('returns clamped macros on the happy path', async () => {
-    const create = vi.fn().mockResolvedValue(
-      modelMessage({
+    const fetchImpl = vi.fn().mockResolvedValue(
+      chatResponse({
         items: [
           { name: 'Simit', grams: 100, kcal: 310, protein: 9, carbs: 60, fat: 3, confidence: 0.7 },
         ],
@@ -178,58 +226,84 @@ describe('analyzeMeal', () => {
       }),
     );
 
-    const result = await analyzeMeal(fakeClient(create), input);
+    const result = await analyzeMeal(clientWith(fetchImpl), input);
     expect(result.items[0]?.name).toBe('Simit');
     expect(result.totals.kcal).toBe(310);
   });
 
-  it('reports a refusal instead of inventing macros', async () => {
-    const create = vi.fn().mockResolvedValue(modelMessage({ items: [], note: '' }, 'refusal'));
-    await expect(analyzeMeal(fakeClient(create), input)).rejects.toMatchObject({
-      reason: 'refused',
-    });
+  it('parses a fenced response rather than failing the whole scan over punctuation', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(rawResponse('```json\n{"items":[],"note":"none"}\n```'));
+    const result = await analyzeMeal(clientWith(fetchImpl), input);
+    expect(result.note).toBe('none');
   });
 
   it('treats truncated output as unusable rather than salvaging it', async () => {
-    const create = vi.fn().mockResolvedValue({
-      stop_reason: 'max_tokens',
-      content: [{ type: 'text', text: '{"items":[' }],
-    });
-    await expect(analyzeMeal(fakeClient(create), input)).rejects.toMatchObject({
+    const fetchImpl = vi.fn().mockResolvedValue(rawResponse('{"items":[', 'length'));
+    await expect(analyzeMeal(clientWith(fetchImpl), input)).rejects.toMatchObject({
       reason: 'invalid_output',
     });
   });
 
   it('rejects non-JSON and empty model text', async () => {
-    const bad = vi.fn().mockResolvedValue({
-      stop_reason: 'end_turn',
-      content: [{ type: 'text', text: 'sorry, no JSON here' }],
-    });
-    await expect(analyzeMeal(fakeClient(bad), input)).rejects.toMatchObject({
+    const bad = vi.fn().mockResolvedValue(rawResponse('sorry, no JSON here'));
+    await expect(analyzeMeal(clientWith(bad), input)).rejects.toMatchObject({
       reason: 'invalid_output',
     });
 
-    const empty = vi.fn().mockResolvedValue({ stop_reason: 'end_turn', content: [] });
-    await expect(analyzeMeal(fakeClient(empty), input)).rejects.toMatchObject({
+    const empty = vi.fn().mockResolvedValue(rawResponse('   '));
+    await expect(analyzeMeal(clientWith(empty), input)).rejects.toMatchObject({
+      reason: 'invalid_output',
+    });
+
+    const noChoices = vi.fn().mockResolvedValue(jsonOk({ choices: [] }));
+    await expect(analyzeMeal(clientWith(noChoices), input)).rejects.toMatchObject({
       reason: 'invalid_output',
     });
   });
 
-  it('maps upstream SDK failures onto typed reasons', async () => {
-    const rateLimited = vi.fn().mockRejectedValue(sdkError(Anthropic.RateLimitError));
-    await expect(analyzeMeal(fakeClient(rateLimited), input)).rejects.toMatchObject({
-      reason: 'rate_limited',
+  it.each([
+    [429, 'rate_limited'],
+    [401, 'unconfigured'],
+    [403, 'unconfigured'],
+    [500, 'upstream'],
+    [400, 'upstream'],
+  ])('maps upstream status %i onto reason %s', async (status, reason) => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonStatus(status));
+    await expect(analyzeMeal(clientWith(fetchImpl), input)).rejects.toMatchObject({ reason });
+  });
+
+  it('treats a network throw as upstream, never as success', async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new TypeError('fetch failed'));
+    await expect(analyzeMeal(clientWith(fetchImpl), input)).rejects.toMatchObject({
+      reason: 'upstream',
     });
+  });
+
+  it('lets an abort propagate instead of reporting it as an upstream fault', async () => {
+    const abort = new DOMException('aborted', 'AbortError');
+    const fetchImpl = vi.fn().mockRejectedValue(abort);
+    await expect(analyzeMeal(clientWith(fetchImpl), input)).rejects.toBe(abort);
+  });
+
+  it('forwards the abort signal to fetch so a hung call can be cancelled', async () => {
+    const controller = new AbortController();
+    const fetchImpl = vi.fn().mockResolvedValue(chatResponse({ items: [], note: '' }));
+    await analyzeMeal(clientWith(fetchImpl), { ...input, signal: controller.signal });
+
+    const init = fetchImpl.mock.calls[0]?.[1] as RequestInit;
+    expect(init.signal).toBe(controller.signal);
   });
 });
 
-describe('toAnalyzeFailure', () => {
-  it('maps rate limits, rejected keys and generic API errors distinctly', () => {
-    expect(toAnalyzeFailure(sdkError(Anthropic.RateLimitError)).reason).toBe('rate_limited');
+describe('failureForStatus / toAnalyzeFailure', () => {
+  it('maps rate limits, rejected keys and generic errors distinctly', () => {
+    expect(failureForStatus(429).reason).toBe('rate_limited');
     // A present-but-rejected key is a misconfiguration, not a transient blip.
-    expect(toAnalyzeFailure(sdkError(Anthropic.AuthenticationError)).reason).toBe('unconfigured');
-    expect(toAnalyzeFailure(sdkError(Anthropic.PermissionDeniedError)).reason).toBe('unconfigured');
-    expect(toAnalyzeFailure(sdkError(Anthropic.APIError)).reason).toBe('upstream');
+    expect(failureForStatus(401).reason).toBe('unconfigured');
+    expect(failureForStatus(403).reason).toBe('unconfigured');
+    expect(failureForStatus(502).reason).toBe('upstream');
   });
 
   it('passes an existing failure through unchanged', () => {

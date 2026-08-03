@@ -57,7 +57,7 @@ export function base64ByteLength(base64: string): number {
 /**
  * Confirms the bytes really are the image type the caller declared.
  *
- * The declared media type is forwarded to the Anthropic API, so letting a caller
+ * The declared media type is forwarded to the vision API, so letting a caller
  * label arbitrary bytes as `image/jpeg` would mean shipping unvalidated content
  * upstream. Sniffing the magic numbers fails that fast, at our edge, for free.
  */

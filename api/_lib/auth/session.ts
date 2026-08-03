@@ -1,7 +1,7 @@
 /**
  * Session tokens and the `__Host-fm_session` cookie.
  *
- * Deliberately **opaque, not JWT** (docs/PLAN.md §2): a JWT cannot be revoked short of
+ * Deliberately **opaque, not JWT** (the project plan §2): a JWT cannot be revoked short of
  * a blocklist, which defeats the point of having one. An opaque token is meaningless on
  * its own — it is looked up against `sessions.token_hash` on every request, so deleting
  * or revoking that row is real, immediate revocation, which is what makes "log out
@@ -17,7 +17,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 
 export const SESSION_COOKIE_NAME = '__Host-fm_session';
 
-const TOKEN_BYTES = 32; // 256 bits, per docs/PLAN.md §2.
+const TOKEN_BYTES = 32; // 256 bits, per the project plan §2.
 
 /** Sliding window: pushed forward on every authenticated request, capped by ABSOLUTE. */
 export const SLIDING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
@@ -60,7 +60,7 @@ export function readSessionCookie(request: Request): string | null {
 
 /**
  * `__Host-` prefix requires exactly `Secure`, `Path=/`, and no `Domain` attribute — all
- * true here (docs/PLAN.md §2). `Secure` cookies work over plain `http://localhost` too:
+ * true here (the project plan §2). `Secure` cookies work over plain `http://localhost` too:
  * browsers treat localhost as a secure context, so local dev is unaffected.
  */
 export function setSessionCookieHeader(token: string, maxAgeSeconds: number): string {

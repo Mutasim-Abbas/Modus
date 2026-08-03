@@ -10,7 +10,7 @@
  * verbatim. This is exactly what `JSON.stringify(state)` produces from real user actions
  * on the shipped v2 app; nothing here was typed by hand to make a test pass.
  *
- * See `docs/TODO.md` P3.2's acceptance criterion: migration must be proven against a
+ * See the project plan P3.2's acceptance criterion: migration must be proven against a
  * captured real v2 payload, not an invented one.
  */
 export const V2_PAYLOAD = {

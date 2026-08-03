@@ -2,7 +2,7 @@
 
 -- Server-assigned `updated_at`, enforced at the database layer.
 --
--- docs/TODO.md P2.1 is explicit: "timestamptz everywhere, server-assigned. Never trust
+-- the project plan P2.1 is explicit: "timestamptz everywhere, server-assigned. Never trust
 -- a client clock." Application code (P2.2/P2.3) will never *send* a client-supplied
 -- updated_at, but a trigger is cheap insurance against a future bug that does: no
 -- matter what value NEW.updated_at holds on the way in, it is stamped with now() here,

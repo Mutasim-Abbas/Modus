@@ -1,5 +1,5 @@
 /**
- * CSRF defence for mutating auth requests (docs/PLAN.md §2: "`SameSite=Lax` plus a
+ * CSRF defence for mutating auth requests (the project plan §2: "`SameSite=Lax` plus a
  * server-side `Origin`/`Sec-Fetch-Site` check on every mutating request. Reject on
  * mismatch.").
  *

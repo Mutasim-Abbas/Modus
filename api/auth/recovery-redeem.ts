@@ -14,7 +14,7 @@ import { toPublicUser } from '../_lib/auth/users.js';
 
 /**
  * POST /api/auth/recovery-redeem — the entire account-recovery mechanism, since v3
- * sends no email (docs/PLAN.md §2). Given the one-time recovery code shown at signup
+ * sends no email (the project plan §2). Given the one-time recovery code shown at signup
  * plus a new password, this verifies the code, sets the new password, **rotates the
  * recovery code** (single-use: the old code stops working the moment this succeeds —
  * see docs/DB.md §4.1 and api/_lib/auth/recovery.ts), revokes every existing session,
@@ -24,7 +24,7 @@ import { toPublicUser } from '../_lib/auth/users.js';
  * and cost — using the identical dummy-hash technique as api/auth/login.ts, for the
  * same reason: this endpoint proves account ownership without a password, so it gets
  * the same no-enumeration treatment as a matter of consistent policy, even though
- * docs/TODO.md's acceptance criterion names login specifically.
+ * the project plan's acceptance criterion names login specifically.
  */
 export function createHandler(overrides: AuthHandlerDeps = {}) {
   return async function handler(request: Request): Promise<Response> {

@@ -16,7 +16,7 @@ import { toPublicUser } from '../_lib/auth/users.js';
  * password (a stolen-but-live session cookie alone is not enough to take over the
  * account's credentials). On success: rotates the session — every existing session,
  * including the one making this request, is revoked, and a fresh one is issued
- * (docs/TODO.md P2.2: "rotation on password change").
+ * (the project plan P2.2: "rotation on password change").
  */
 export function createHandler(overrides: AuthHandlerDeps = {}) {
   return async function handler(request: Request): Promise<Response> {

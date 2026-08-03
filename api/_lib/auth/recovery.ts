@@ -1,5 +1,5 @@
 /**
- * The one-time account-recovery code (docs/PLAN.md §2 — no email service exists in v3,
+ * The one-time account-recovery code (the project plan §2 — no email service exists in v3,
  * so this is the entire account-recovery mechanism).
  *
  * Generated once at signup, shown to the user exactly once in the response body, never

@@ -1,13 +1,13 @@
 /**
  * Postgres-backed rate limiting — the durable replacement for `api/_lib/rate-limit.ts`
- * for anything security-relevant (docs/PLAN.md §2). That in-memory limiter is honest
+ * for anything security-relevant (the project plan §2). That in-memory limiter is honest
  * about living in one serverless instance's memory and resetting on every cold start;
  * fine as a courtesy brake on the scan button, not fine for login brute force. This one
  * counts real rows in `auth_attempts`, which survives a cold start because it survives
  * in Postgres.
  *
  * Two independent counters per action — per-IP and per-account — checked together by
- * the caller (docs/TODO.md P2.2). `key` is the hashed IP for `scope: 'ip'` and the
+ * the caller (the project plan P2.2). `key` is the hashed IP for `scope: 'ip'` and the
  * lowercased email **as submitted** (whether or not it is a real account) for
  * `scope: 'account'` — see docs/DB.md §4.3 for why that must not depend on account
  * existence.

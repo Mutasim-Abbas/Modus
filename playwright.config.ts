@@ -18,7 +18,7 @@ export default defineConfig({
     baseURL,
     trace: 'on-first-retry',
   },
-  // docs/PLAN.md §8.8 asks for both sizes to be genuinely verified, and the project notes
+  // the project plan §8.8 asks for both sizes to be genuinely verified, and the project notes
   // pins the two widths every previous browser pass used: ~390 px and ~1440 px. The
   // device descriptors' own viewports (1280 and 412) are overridden so the numbers in
   // the report are the numbers in the plan.

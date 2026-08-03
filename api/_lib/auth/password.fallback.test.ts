@@ -1,4 +1,4 @@
-// The documented fallback path (docs/PLAN.md §2): if the native @node-rs/argon2
+// The documented fallback path (the project plan §2): if the native @node-rs/argon2
 // binding fails to LOAD for the running platform/architecture, password.ts falls back
 // to node:crypto's scrypt (OWASP params) rather than crashing the whole auth surface.
 //

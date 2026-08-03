@@ -357,7 +357,7 @@ export function saveState(state: AppState): boolean {
 /**
  * UUIDv7-style id: a 48-bit millisecond timestamp in the high bits followed by random
  * bits, so ids sort chronologically as plain strings — unlike v4, which is fully
- * random. This matters once sync lands (`docs/PLAN.md` §2, `docs/DB.md` §2.3): these
+ * random. This matters once sync lands (the project plan §2, `docs/DB.md` §2.3): these
  * are the client-generated ids for `entries`/`weights`/`custom_foods` rows, and a
  * time-ordered id is easier to reason about in logs and query plans than a random one.
  * Falls back to a non-UUID-shaped but still-unique string when `crypto.getRandomValues`

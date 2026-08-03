@@ -8,7 +8,7 @@ coverage/
 playwright-report/
 test-results/
 
-# NOTE: ./drizzle (migrations, P2.1) is deliberately NOT ignored — docs/PLAN.md §2 requires
+# NOTE: ./drizzle (migrations, P2.1) is deliberately NOT ignored — the project plan requires
 # committed, reviewable SQL migration files, not generated-and-discarded output.
 
 # Secrets — the Anthropic API key belongs in Vercel env vars, never in the repo.
