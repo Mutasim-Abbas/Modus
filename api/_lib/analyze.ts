@@ -16,7 +16,18 @@ import type { SupportedMediaType } from './validate.js';
 /** Groq's vision model. Their catalogue moves; this is pinned deliberately. */
 const MODEL = 'qwen/qwen3.6-27b';
 const ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
-const MAX_TOKENS = 8_192;
+
+/**
+ * Deliberately small. Groq's free tier caps a request at 8000 tokens per minute, and it
+ * counts prompt + `max_tokens` TOGETHER — so a generous ceiling here is not free, it is
+ * the difference between the scan working and every call failing with a 413. The image
+ * plus prompt costs roughly 2.5k, leaving comfortable headroom at 2000.
+ *
+ * 2000 is still far more than the output needs: a realistic photo yields a handful of
+ * items at ~40 tokens each, and the whole response is capped at 30 items and a 500-char
+ * note by `normalizeModelOutput` regardless.
+ */
+const MAX_TOKENS = 2_000;
 
 /** Guards against absurd output. Not nutrition science — just sanity bounds. */
 const MAX_ITEMS = 30;
@@ -334,7 +345,11 @@ export async function analyzeMeal(
  * provider changes its copy.
  */
 export function failureForStatus(status: number): AnalyzeFailure {
-  if (status === 429) {
+  // 413 as well as 429: Groq answers 413 when a request would exceed the per-minute
+  // token budget (`code: rate_limit_exceeded`), which is a rate limit wearing a
+  // payload-too-large costume. Reporting it as a generic upstream error would tell the
+  // user "something broke" when the truth is "wait a moment and try again".
+  if (status === 429 || status === 413) {
     return new AnalyzeFailure('rate_limited', 'Upstream rate limit reached.');
   }
 

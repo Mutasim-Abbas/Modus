@@ -180,7 +180,10 @@ describe('analyzeMeal', () => {
 
     const body = JSON.parse(String(init.body)) as Record<string, unknown>;
     expect(body.model).toBe('qwen/qwen3.6-27b');
-    expect(body.max_tokens).toBe(8_192);
+    // Must stay well under Groq's free-tier 8000 TPM ceiling, which counts prompt and
+    // max_tokens together. Raising this breaks every scan with a 413.
+    expect(body.max_tokens).toBe(2_000);
+    expect(body.max_tokens as number).toBeLessThan(5_000);
     // json_object, not a provider-specific json_schema mode: see the note in analyze.ts.
     expect(body.response_format).toEqual({ type: 'json_object' });
   });
@@ -265,6 +268,9 @@ describe('analyzeMeal', () => {
 
   it.each([
     [429, 'rate_limited'],
+    // Groq returns 413 when a request would blow the per-minute token budget. It is a
+    // rate limit, not a malformed request, and must not read as a generic failure.
+    [413, 'rate_limited'],
     [401, 'unconfigured'],
     [403, 'unconfigured'],
     [500, 'upstream'],
