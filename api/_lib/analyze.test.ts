@@ -186,6 +186,11 @@ describe('analyzeMeal', () => {
     expect(body.max_tokens as number).toBeLessThan(5_000);
     // json_object, not a provider-specific json_schema mode: see the note in analyze.ts.
     expect(body.response_format).toEqual({ type: 'json_object' });
+    // The model is a reasoning model and its trace is billed against max_tokens above —
+    // measured at ~3.7k on a real meal, against a 2k budget. Leaving it on made Groq
+    // reject the unfinished JSON with 400 json_validate_failed, i.e. every scan of an
+    // actual plate of food failed. Verified against the live API, not assumed.
+    expect(body.reasoning_effort).toBe('none');
   });
 
   it('sends the key as a bearer token and nowhere else', async () => {

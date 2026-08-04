@@ -23,11 +23,33 @@ const ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
  * the difference between the scan working and every call failing with a 413. The image
  * plus prompt costs roughly 2.5k, leaving comfortable headroom at 2000.
  *
- * 2000 is still far more than the output needs: a realistic photo yields a handful of
- * items at ~40 tokens each, and the whole response is capped at 30 items and a 500-char
- * note by `normalizeModelOutput` regardless.
+ * 2000 is far more than the ANSWER needs — a realistic photo yields a handful of items
+ * at ~40 tokens each, and `normalizeModelOutput` caps the response at 30 items and a
+ * 500-char note regardless. It is not remotely enough for the answer plus a reasoning
+ * trace, which is why `reasoning_effort` below is not optional.
  */
 const MAX_TOKENS = 2_000;
+
+/**
+ * 🚨 Load-bearing. `qwen/qwen3.6-27b` is a REASONING model: left to its own devices it
+ * emits a thinking trace before the answer, and that trace is billed against
+ * `max_tokens`. Measured against the real API on a five-item meal, the trace alone ran
+ * 3,743 tokens — nearly twice the entire budget above.
+ *
+ * The failure that causes is not the truncated-but-usable response you might expect.
+ * Because `response_format: json_object` is set, Groq validates the output before
+ * returning it, finds the JSON unterminated, and answers 400 `json_validate_failed` —
+ * which `failureForStatus` correctly reads as a generic upstream error, surfacing to the
+ * user as "The scan failed on the server". Every scan of a real meal failed this way.
+ *
+ * Raising `max_tokens` instead is not an option: prompt + max_tokens must stay under
+ * 8000, and a photo's prompt alone is ~2.5k, so there is no budget that fits both a
+ * ~4k trace and the free tier. Disabling the trace fits comfortably (638 total tokens
+ * on the same meal) and is ~10x faster (0.7s vs 7.9s). The estimates are as good: this
+ * is portion-size recognition, not a reasoning problem, and the user edits every number
+ * before anything is logged.
+ */
+const REASONING_EFFORT = 'none';
 
 /** Guards against absurd output. Not nutrition science — just sanity bounds. */
 const MAX_ITEMS = 30;
@@ -269,6 +291,8 @@ export async function analyzeMeal(
   const body = {
     model: MODEL,
     max_tokens: MAX_TOKENS,
+    // See REASONING_EFFORT above — without this every scan of a real meal fails.
+    reasoning_effort: REASONING_EFFORT,
     // Low but not zero: estimation benefits from a little flexibility, and a fully
     // greedy decode makes the model repeat one confident wrong answer.
     temperature: 0.2,
