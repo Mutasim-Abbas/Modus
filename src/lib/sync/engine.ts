@@ -70,6 +70,9 @@ class SyncEngine {
   private debounce: ReturnType<typeof setTimeout> | null = null;
   private syncing = false;
   private runId = 0;
+  /** True only for the synchronous instant in which THIS engine writes the store with
+   *  freshly pulled remote data — see the store subscription in `start()`. */
+  private applyingRemote = false;
 
   getState(): EngineState {
     return this.state;
@@ -114,6 +117,15 @@ class SyncEngine {
     this.unsubscribeStore = store.subscribe(() => {
       if (this.runId !== myRunId) return;
       this.recomputePendingCount();
+      // 🚨 Only a LOCAL edit may schedule a sync. Every pull ends in a
+      // `store.replaceSyncedState` (`applyIncrementalPull`) — unconditionally, even when
+      // the response carried no rows at all — so without this guard the engine's own
+      // write would re-arm the debounce below, that sync would write again, and the loop
+      // would feed itself forever at 1.5s intervals: the chip stuck on "Syncing…" and a
+      // pull request every second and a half for as long as the tab stays open.
+      // `applyingRemote` is set around a synchronous store write, so it can never mask a
+      // real user edit — JS cannot interleave one in between.
+      if (this.applyingRemote) return;
       if (this.debounce) clearTimeout(this.debounce);
       this.debounce = setTimeout(() => void this.syncNow(), 1500);
     });
@@ -233,6 +245,18 @@ class SyncEngine {
         lastSyncedAt: finalSync.lastSyncedAt,
         pendingCount: buildOutbox(store.getState(), finalSync).pendingCount,
       });
+    } catch {
+      // Nothing in the cycle above is EXPECTED to throw — both network calls already
+      // catch their own failures. But `activity: 'syncing'` is cleared in exactly one
+      // place (the setState just above), so anything that escapes on the way there — a
+      // storage failure inside the store write, a malformed row surviving parsing —
+      // would otherwise leave the chip reading "Syncing…" for the rest of the session,
+      // with `void this.syncNow()` swallowing the rejection at every call site. Report
+      // it honestly instead; the heartbeat retries on the next tick either way.
+      this.setState({
+        activity: 'error',
+        lastErrorMessage: 'Sync stopped unexpectedly on this device. It will retry shortly.',
+      });
     } finally {
       this.syncing = false;
     }
@@ -251,7 +275,13 @@ class SyncEngine {
       return false;
     }
 
-    const applied = applyIncrementalPull(sync, result);
+    let applied: RemoteApplied;
+    this.applyingRemote = true;
+    try {
+      applied = applyIncrementalPull(sync, result);
+    } finally {
+      this.applyingRemote = false;
+    }
 
     updateAccountSyncState(userId, (prev) => ({
       ...prev,

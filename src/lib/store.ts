@@ -438,6 +438,66 @@ export interface Store {
   ) => void;
 }
 
+/* ------------------------------------------------------------------ *
+ * `replaceSyncedState`'s no-op guard                                   *
+ * ------------------------------------------------------------------ */
+
+/**
+ * These exist so a sync pull that changed nothing does not masquerade as a state change.
+ *
+ * `src/lib/sync/applyRemote.ts` rebuilds the containers (`days`, and each row array)
+ * on every merge, so the result is never reference-equal to the current state even when
+ * the remote delta was empty — but the ROW OBJECTS inside are reused as-is whenever the
+ * local copy won or was untouched. That makes per-row reference equality the exact
+ * signal we want, and a cheap one: no deep field walk, no `JSON.stringify`.
+ *
+ * Deliberately conservative in one direction only. A row the merge legitimately replaced
+ * is a new object, so it always compares as changed; the worst this can ever do is fail
+ * to notice that two structurally-identical objects are equal, which just commits as
+ * before. It can never report "unchanged" for content that actually differs.
+ */
+function sameRows<T>(a: readonly T[], b: readonly T[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  return a.every((row, index) => row === b[index]);
+}
+
+function sameDays(a: Record<DayKey, DayLog>, b: Record<DayKey, DayLog>): boolean {
+  if (a === b) return true;
+  const aKeys = Object.keys(a);
+  if (aKeys.length !== Object.keys(b).length) return false;
+  for (const key of aKeys) {
+    const dayA = a[key];
+    const dayB = b[key];
+    if (dayA === dayB) continue;
+    if (!dayA || !dayB || !sameRows(dayA.entries, dayB.entries)) return false;
+  }
+  return true;
+}
+
+function sameProfile(a: Profile | null, b: Profile | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.sex === b.sex && a.age === b.age && a.heightCm === b.heightCm && a.weightKg === b.weightKg && a.activity === b.activity && a.goal === b.goal;
+}
+
+function sameSettings(a: Settings, b: Settings): boolean {
+  return a === b || (a.units === b.units && a.reducedMotion === b.reducedMotion);
+}
+
+/** `targets` is intentionally not compared — it is derived purely from `profile`
+ *  (`calculateTargets`), so an unchanged profile guarantees unchanged targets. */
+function sameSyncedContent(a: AppState, b: AppState): boolean {
+  return (
+    sameProfile(a.profile, b.profile) &&
+    sameSettings(a.settings, b.settings) &&
+    sameDays(a.days, b.days) &&
+    sameRows(a.weights, b.weights) &&
+    sameRows(a.customFoods, b.customFoods) &&
+    sameRows(a.favourites, b.favourites)
+  );
+}
+
 export function createStore(initial: AppState = loadState()): Store {
   let state: AppState = initial;
   let persisted = true;
@@ -603,11 +663,22 @@ export function createStore(initial: AppState = loadState()): Store {
 
     replaceSyncedState(patch) {
       const nextProfile = 'profile' in patch ? patch.profile ?? null : state.profile;
-      commit({
+      const next: AppState = {
         ...state,
         ...patch,
+        profile: nextProfile,
         targets: nextProfile ? calculateTargets(nextProfile) : null,
-      });
+      };
+
+      // A pull that brought back nothing new must not look like a state change. Every
+      // subscriber — `useStore`'s `useSyncExternalStore`, and the sync engine's own
+      // listener — is woken by `commit`, so an unconditional commit here meant the
+      // 45s heartbeat re-rendered the whole app for no reason, and (before the guard in
+      // `src/lib/sync/engine.ts`) fed a self-perpetuating sync loop. Skipping the commit
+      // also skips a needless `saveState` write of the entire blob.
+      if (sameSyncedContent(state, next)) return;
+
+      commit(next);
     },
 
     reset() {

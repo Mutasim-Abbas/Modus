@@ -41,6 +41,7 @@ beforeEach(() => {
 
 afterEach(() => {
   syncEngine.stop();
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -200,6 +201,53 @@ describe('syncEngine — the background loop', () => {
     // stop() never touches the store either.
     const day2 = Object.values(store.getState().days).find((d) => d.entries.some((e) => e.id === entry.id));
     expect(day2?.entries.some((e) => e.id === entry.id && e.deletedAt === null)).toBe(true);
+  });
+
+  it('a completed cycle never schedules the next one — the engine does not sync itself in a loop', async () => {
+    markResolved();
+    vi.useFakeTimers();
+    vi.spyOn(client, 'push').mockResolvedValue(emptyPush());
+    const pullSpy = vi.spyOn(client, 'pull').mockResolvedValue(emptyPull());
+
+    syncEngine.start(USER_ID);
+    await syncEngine.syncNow();
+    expect(pullSpy).toHaveBeenCalledTimes(1);
+
+    // Every pull writes the store (`applyIncrementalPull`) even when the response was
+    // empty. If that write re-armed the local-edit debounce, each cycle would schedule
+    // the next one and the chip would sit on "Syncing…" forever with nothing to sync.
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(pullSpy).toHaveBeenCalledTimes(1);
+    expect(syncEngine.getState().activity).toBe('idle');
+  });
+
+  it('a genuine local edit still schedules a sync after the debounce', async () => {
+    markResolved();
+    vi.useFakeTimers();
+    const pushSpy = vi.spyOn(client, 'push').mockResolvedValue(emptyPush());
+    vi.spyOn(client, 'pull').mockResolvedValue(emptyPull());
+
+    syncEngine.start(USER_ID);
+    store.addEntry({ name: 'A real local edit', grams: 1, kcal: 1, protein: 1, carbs: 1, fat: 1, meal: 'snack', source: 'manual' });
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('an unexpected mid-cycle failure reports an error instead of pinning the chip on "Syncing…" forever', async () => {
+    markResolved();
+    vi.spyOn(client, 'push').mockResolvedValue(emptyPush());
+    vi.spyOn(client, 'pull').mockResolvedValue(emptyPull());
+    vi.spyOn(store, 'replaceSyncedState').mockImplementation(() => {
+      throw new Error('storage blew up mid-merge');
+    });
+
+    syncEngine.start(USER_ID);
+    await syncEngine.syncNow();
+
+    expect(syncEngine.getState().activity).toBe('error');
+    expect(syncEngine.getState().lastErrorMessage).toBeTruthy();
   });
 
   it('the outbox survives a genuine reload — a fresh store and fresh sync state read back from disk reproduce it exactly', () => {

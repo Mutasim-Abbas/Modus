@@ -319,6 +319,41 @@ describe('subscriptions', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
+  it('replaceSyncedState with identical content notifies nobody', () => {
+    const store = createStore(defaultState());
+    store.setProfile(profile);
+    store.addEntry(entry);
+    const before = store.getState();
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    // Exactly what an empty pull produces: rebuilt containers around the very same row
+    // objects. Nothing changed, so nothing may be woken.
+    store.replaceSyncedState({
+      days: Object.fromEntries(Object.values(before.days).map((day) => [day.date, { ...day, entries: [...day.entries] }])),
+      weights: [...before.weights],
+      customFoods: [...before.customFoods],
+      favourites: [...before.favourites],
+      profile: { ...before.profile! },
+      settings: { ...before.settings },
+    });
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(store.getState()).toBe(before);
+  });
+
+  it('replaceSyncedState with genuinely new content still notifies', () => {
+    const store = createStore(defaultState());
+    store.addEntry(entry);
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    store.replaceSyncedState({ weights: [{ id: 'w1', day: '2026-01-01', weightKg: 80, updatedAt: 1, deletedAt: null }] });
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(store.getState().weights).toHaveLength(1);
+  });
+
   it('notifies on reset', () => {
     const store = createStore(defaultState());
     const listener = vi.fn();
