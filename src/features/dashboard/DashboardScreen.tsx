@@ -5,15 +5,21 @@ import { EmptyState } from '@/components/EmptyState';
 import { MacroBar, MacroRing } from '@/components/MacroRing';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { StatTile } from '@/components/StatTile';
+import { CaloriesChart } from '@/components/charts/CaloriesChart';
 import { cn } from '@/lib/cn';
 import { remainingMacros, sumMacros } from '@/lib/macros';
 import { selectDay } from '@/lib/store';
-import { formatLongDate, toDayKey } from '@/lib/date';
+import { formatLongDate, formatShortDate, lastNDays, toDayKey } from '@/lib/date';
 import { useAppState } from '@/lib/useStore';
 import { MealList } from '@/features/log/MealList';
 import { MEAL_ORDER } from '@/features/log/meals';
+import { QuickAddRow } from '@/features/dashboard/QuickAddRow';
+import { selectCaloriesSeries, selectDayTotalsMap } from '@/features/progress/selectors';
 import { SyncChip } from '@/features/sync/SyncChip';
 import { useShellBreakpoint } from '@/app/useBreakpoint';
+
+/** The trend window the mock puts on Today — long enough to read, short enough to fit. */
+const TREND_DAYS = 14;
 
 const GOAL_LABEL: Record<string, string> = {
   cut: 'Cutting · −20%',
@@ -29,6 +35,20 @@ export function DashboardScreen(): JSX.Element {
 
   const day = useMemo(() => selectDay(state, today), [state, today]);
   const consumed = useMemo(() => sumMacros(day.entries), [day.entries]);
+
+  // Only computed for the wider layouts, but hooks cannot be called conditionally — and
+  // this is a map over the logged days already in memory, not a trip to storage.
+  const dayTotals = useMemo(() => selectDayTotalsMap(state), [state]);
+  const trendDays = useMemo(() => lastNDays(TREND_DAYS, today), [today]);
+  const trendSeries = useMemo(
+    () => selectCaloriesSeries(dayTotals, trendDays),
+    [dayTotals, trendDays],
+  );
+  const trendAvgKcal = useMemo(() => {
+    const logged = trendSeries.filter((p): p is { day: string; kcal: number } => p.kcal !== null);
+    if (logged.length === 0) return null;
+    return Math.round(logged.reduce((sum, p) => sum + p.kcal, 0) / logged.length);
+  }, [trendSeries]);
 
   // RequireProfile guarantees a profile; targets are derived alongside it.
   const targets = state.targets;
@@ -53,19 +73,29 @@ export function DashboardScreen(): JSX.Element {
 
   return (
     <>
+      {/* Phone follows the mock's header exactly: the date alone as the eyebrow, in the
+          mock's own short-month format, and nothing under the headline. Spelling the
+          month out and adding the explanatory line pushed the eyebrow to three lines and
+          the h1 to two at 402 px, burying the ring below the fold. Desktop has the room,
+          so it keeps the long date, the subtitle and the mark. */}
       <ScreenHeader
         live
-        eyebrow={`Today · ${formatLongDate(today)}`}
+        eyebrow={isPhone ? formatShortDate(today) : `Today · ${formatLongDate(today)}`}
         title={
           /* The h1 carries the number and its unit as one string, so a screen reader
              reads "2711 kcal left" rather than the two as unrelated fragments. */
           `${headlineNum} ${headlineUnit}`
         }
-        subtitle="Everything on one screen: your budget, the trend behind it, and what you actually ate."
+        {...(isPhone
+          ? {}
+          : {
+              subtitle:
+                'Everything on one screen: your budget, the trend behind it, and what you actually ate.',
+            })}
         action={
           <>
             <SyncChip />
-            <BrandMark size={46} />
+            {isPhone ? null : <BrandMark size={46} />}
           </>
         }
       />
@@ -120,6 +150,12 @@ export function DashboardScreen(): JSX.Element {
         </section>
 
         <div className="flex flex-col gap-5">
+          {/* Desktop only. The phone mock goes ring card → quick-add → meals with no tiles
+              in between: every figure they carry is already on the ring card directly
+              above them (eaten/target under the number, protein in its own bar), so on a
+              402 px screen they are a second telling of the same three facts that pushes
+              the meal list another 120 px down. Desktop has the column to spare. */}
+          {isPhone ? null : (
           <section className="grid grid-cols-3 gap-3.5">
             <StatTile
               label="Eaten"
@@ -139,6 +175,36 @@ export function DashboardScreen(): JSX.Element {
               tone="cyan"
             />
           </section>
+          )}
+
+          {/* One slot, two occupants. The desktop mock puts the 14-day trend between the
+              tiles and today's meals; the phone mock puts the quick-add rail there
+              instead and keeps its trend on Insights. Switched on the breakpoint rather
+              than hidden with CSS, so only one of them is ever in the DOM. */}
+          {isPhone ? (
+            <QuickAddRow day={today} />
+          ) : (
+            <section aria-labelledby="today-trend" className="card">
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <h2 id="today-trend" className="text-base font-bold">
+                    Last 14 days
+                  </h2>
+                  <p className="mt-1.5 text-xs text-fm-text-subtle">
+                    Daily calories against your {Math.round(targets.kcal)} kcal target
+                  </p>
+                </div>
+                {/* Averaged over the days actually logged, never over the whole 14 —
+                    dividing by 14 would read as "you ate 900 kcal" after a week off. */}
+                {trendAvgKcal !== null ? (
+                  <span className="whitespace-nowrap text-xs tabular-nums text-fm-text-faint">
+                    avg {trendAvgKcal}
+                  </span>
+                ) : null}
+              </div>
+              <CaloriesChart series={trendSeries} targetKcal={targets.kcal} />
+            </section>
+          )}
 
           <section aria-labelledby="today-meals" className="card">
             <div className="mb-4 flex items-center justify-between gap-3">

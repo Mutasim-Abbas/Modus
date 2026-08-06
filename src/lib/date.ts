@@ -76,6 +76,18 @@ export function formatLongDate(key: DayKey): string {
   return date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
+/**
+ * The phone mock's header date: long weekday, short month ("Thursday, 6 Aug").
+ *
+ * Exists because `formatLongDate` spells the month out, and at 402 px that pushes the
+ * eyebrow onto three lines and shoves the headline down with it.
+ */
+export function formatShortDate(key: DayKey): string {
+  const date = fromDayKey(key);
+  if (!date) return key;
+  return date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+}
+
 export function formatDayLabel(key: DayKey, today: DayKey = toDayKey()): string {
   const date = fromDayKey(key);
   if (!date) return key;

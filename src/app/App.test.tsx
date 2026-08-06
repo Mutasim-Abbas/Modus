@@ -95,8 +95,10 @@ describe('routing — once onboarded', () => {
       expect(within(nav).getByRole('link', { name: label })).toBeInTheDocument();
     }
     // Logging is the app's one action, so it gets the raised centre button rather than
-    // competing with the destinations as a fifth peer.
-    expect(within(nav).getByRole('link', { name: 'Log food' })).toBeInTheDocument();
+    // competing with the destinations as a fifth peer. On phone it is a *button*, not a
+    // link: it opens the search-or-scan chooser instead of going straight to /log.
+    expect(within(nav).getByRole('button', { name: 'Log food' })).toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: 'Log food' })).not.toBeInTheDocument();
 
     // Scan, History and the old More hub are not destinations: scan is an input method
     // inside Log/Coach, and History is reached from Coach's shortcuts. Both routes still
@@ -106,13 +108,34 @@ describe('routing — once onboarded', () => {
     }
   });
 
-  it('navigates to the log screen from the dock button', async () => {
+  it('offers search or scan from the dock button, then reaches the log screen', async () => {
     const user = userEvent.setup();
     renderAt('/');
     const nav = screen.getByRole('navigation', { name: /main/i });
 
-    await user.click(within(nav).getByRole('link', { name: 'Log food' }));
+    await user.click(within(nav).getByRole('button', { name: 'Log food' }));
+
+    // The chooser names both ways in, so scanning is discoverable from the one place a
+    // thumb already is — it is otherwise only reachable from inside the Log header.
+    const chooser = await screen.findByRole('dialog', { name: /add to your log/i });
+    expect(within(chooser).getByRole('button', { name: /scan a meal/i })).toBeInTheDocument();
+
+    await user.click(within(chooser).getByRole('button', { name: /search the food list/i }));
     expect(await screen.findByLabelText(/search foods/i)).toBeInTheDocument();
+  });
+
+  it('reaches the scan screen from the dock chooser', async () => {
+    const user = userEvent.setup();
+    renderAt('/');
+    const nav = screen.getByRole('navigation', { name: /main/i });
+
+    await user.click(within(nav).getByRole('button', { name: 'Log food' }));
+    const chooser = await screen.findByRole('dialog', { name: /add to your log/i });
+    await user.click(within(chooser).getByRole('button', { name: /scan a meal/i }));
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /estimate a meal from a photo/i }),
+    ).toBeInTheDocument();
   });
 
   it('navigates to Insights from the dock and shows honest, per-card empty states', async () => {
@@ -127,7 +150,10 @@ describe('routing — once onboarded', () => {
     // take a while under a loaded test-runner CPU, not on any real async data fetch.
     expect(await screen.findByText(/no weight readings yet/i, {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText(/nothing logged in this range/i)).toBeInTheDocument();
-    expect(screen.getByText(/no weeks logged yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no split to show yet/i)).toBeInTheDocument();
+    // "Weekly averages" is desktop's; this block runs at the phone default, where the
+    // mock's Insights is four cards. ProgressScreen.test.tsx covers both widths.
+    expect(screen.getByText(/no active streak/i)).toBeInTheDocument();
   });
 
   it('reaches Coach from the dock, and History from Coach’s shortcuts', async () => {
@@ -195,6 +221,32 @@ describe('dashboard — empty vs populated', () => {
     expect(screen.getByText(/chicken breast/i)).toBeInTheDocument();
     expect(screen.queryByText(/nothing logged yet/i)).not.toBeInTheDocument();
   });
+
+  // The slot between the stat tiles and today's meals belongs to the quick-add rail on
+  // phone and to the 14-day trend on desktop — never to both, and never to neither.
+  it('puts the quick-add rail — not the 14-day trend — in the phone’s middle slot', async () => {
+    store.addEntry({
+      foodId: 'banana',
+      name: 'Banana',
+      grams: 118,
+      kcal: 105,
+      protein: 1.3,
+      carbs: 27,
+      fat: 0.4,
+      meal: 'snack',
+      source: 'food-db',
+    });
+
+    renderAt('/');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(screen.getByRole('list', { name: /log a recent food again/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /log banana again/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /last 14 days/i })).not.toBeInTheDocument();
+
+    // The phone mock's Today is ring → quick-add → meals; the stat tiles are desktop's.
+    expect(screen.queryByText(/% of target/i)).not.toBeInTheDocument();
+  });
 });
 
 describe('routing — desktop shell (≥1024px)', () => {
@@ -217,6 +269,28 @@ describe('routing — desktop shell (≥1024px)', () => {
     for (const label of ['More', 'History', 'Scan', 'Plan', 'Profile']) {
       expect(within(nav).queryByRole('link', { name: label })).not.toBeInTheDocument();
     }
+  });
+
+  it('puts the 14-day trend — not the quick-add rail — in the desktop’s middle slot', async () => {
+    store.addEntry({
+      foodId: 'banana',
+      name: 'Banana',
+      grams: 118,
+      kcal: 105,
+      protein: 1.3,
+      carbs: 27,
+      fat: 0.4,
+      meal: 'snack',
+      source: 'food-db',
+    });
+
+    renderAt('/');
+    await screen.findByRole('heading', { level: 1 });
+
+    expect(screen.getByRole('heading', { name: /last 14 days/i })).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: /log a recent food again/i })).not.toBeInTheDocument();
+    // Desktop keeps the stat tiles the phone mock leaves out.
+    expect(screen.getByText(/% of target/i)).toBeInTheDocument();
   });
 
   it('mounts exactly one nav landmark, whatever the width', async () => {

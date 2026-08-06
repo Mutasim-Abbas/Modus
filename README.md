@@ -7,7 +7,10 @@ other devices.
 
 Built by **Mutasim Abbas** — BSc Software Engineering, Istanbul Atlas University.
 
-> ### Status: live at **[fitmacro.vercel.app](https://fitmacro.vercel.app)**
+> ### Status: live at **[modus-tracker.vercel.app](https://modus-tracker.vercel.app)**
+> The original **[fitmacro.vercel.app](https://fitmacro.vercel.app)** still serves the same
+> app and is not going away — your saved log lives per-origin in the browser, so retiring
+> that hostname would strand anyone who used it before the rename.
 > Running on Vercel with a Neon Postgres database, so guest mode, accounts and cross-device
 > sync all work. Everything described below has also been exercised against a local
 > production build (`npm run build` + `npm run preview`).
@@ -117,7 +120,7 @@ and the exact number of rows a destructive choice would remove.
 ### Three things you should know before creating an account
 
 These are deliberate trade-offs, documented in
-[the internal security audit](./the internal security audit) §5. They are written here because a
+The internal security audit §5. They are written here because a
 trade-off nobody tells you about is just a hidden defect.
 
 1. **Someone who knows your email can lock you out for up to 15 minutes.** Modus limits
@@ -144,7 +147,7 @@ trade-off nobody tells you about is just a hidden defect.
    control — the per-account limit (keyed on the submitted email, which no header can
    forge) is what still holds. Anyone deploying Modus somewhere other than Vercel must
    revisit `clientIpFrom` in `api/_lib/rate-limit.ts` first. This is also stated as a
-   platform prerequisite in [the project plan](./the project plan). (Finding F-14.)
+   platform prerequisite in the project plan. (Finding F-14.)
 
 ### There is no password-reset email
 
@@ -242,7 +245,7 @@ docs/                   BRIEF, PLAN, TODO, DESIGN, API, DB, DEPLOY,
   checked, not assumed.
 
 Three security passes are written up in full, including what was tried and *failed* to
-break, in [the internal security audit](./the internal security audit).
+break, in the internal security audit.
 
 ## PWA & offline
 

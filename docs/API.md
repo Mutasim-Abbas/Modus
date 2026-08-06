@@ -294,7 +294,7 @@ is ever created, and the loser's unique violation is caught and reported as the 
 
 ## Account recovery — no email in v3
 
-the project plan §2: v3 sends no email at all. The recovery code shown once at signup is
+The project plan §2: v3 sends no email at all. The recovery code shown once at signup is
 the **entire** recovery mechanism. It is single-use and **regenerable by construction**:
 every successful `recovery-redeem` call rotates it — the code just used stops verifying,
 and a brand-new one is returned in that same response, shown once, exactly like signup.
@@ -769,7 +769,7 @@ timestamp" above), a byte-for-byte-identical re-push still advances that row's
 other device sees anything different), just not perfectly silent at the timestamp level.
 
 **Duplicate ids *within a single batch* are collapsed, not rejected** (`dedupeOps()` —
-the internal security audit F-02, where sending two ops for one id used to `500` the entire push).
+The internal security audit F-02, where sending two ops for one id used to `500` the entire push).
 If one array contains several ops addressing the same row — same `id`, or same `foodId`
 for `favourites` — only the **last** one in the array is applied. That is the same
 last-write-wins rule the server already applies *across* pushes, resolved here by array
@@ -853,7 +853,7 @@ below for why, and what actually bounds abuse today.
 **There is no `db.transaction()` wrapping a push batch, and this is a real, deliberate,
 documented gap — not an oversight and not silently claimed away.**
 `@neondatabase/serverless`'s HTTP driver (`neon-http`) — chosen specifically in
-the project plan §2 to avoid serverless connection-pool exhaustion, the classic
+The project plan §2 to avoid serverless connection-pool exhaustion, the classic
 Postgres-on-Lambda failure mode — has **no transaction support at all**
 (`db.transaction()` throws "No transactions support in neon-http driver," verified
 directly against `node_modules/drizzle-orm/neon-http/session.js`, the identical gap

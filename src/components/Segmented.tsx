@@ -14,6 +14,14 @@ interface SegmentedProps<T extends string> {
   onChange: (value: T) => void;
   /** Stack vertically when options carry hints. */
   columns?: 1 | 2 | 3 | 4;
+  /**
+   * Hide the legend visually while keeping it for screen readers. For groups whose
+   * purpose is obvious from the options themselves — the Insights range picker reads
+   * "7 days / 30 days / 90 days", so a "Date range" caption above it is a label for
+   * something already labelled. Never drop the legend outright: the radio group still
+   * needs a name when it is announced.
+   */
+  hideLegend?: boolean;
 }
 
 /**
@@ -28,12 +36,15 @@ export function Segmented<T extends string>({
   value,
   onChange,
   columns = 2,
+  hideLegend = false,
 }: SegmentedProps<T>): JSX.Element {
   const name = useId();
 
   return (
     <fieldset className="flex flex-col gap-2 border-0 p-0">
-      <legend className="mb-1 text-sm font-semibold text-white">{legend}</legend>
+      <legend className={cn(hideLegend ? 'sr-only' : 'mb-1 text-sm font-semibold text-white')}>
+        {legend}
+      </legend>
 
       <div
         className={cn(

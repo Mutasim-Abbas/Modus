@@ -10,7 +10,13 @@ import { addDays, dayKeysBetween, toDayKey } from '@/lib/date';
  * renders that as an empty slot instead — docs/DESIGN.md §4.2.2).
  */
 
-export type RangeKey = '30d' | '90d' | '1y' | 'all';
+/**
+ * The three windows the mock offers. `1y` and `all` were dropped with them — the range
+ * picker is the only way to widen the charts, so nothing else needs to resolve those
+ * keys. `earliestActivityDay` is kept: it is the honest start-of-data and is still worth
+ * having, even though no range currently spans back to it.
+ */
+export type RangeKey = '7d' | '30d' | '90d';
 
 /**
  * A `Record` keyed by the exact `RangeKey` union, not an array — indexing a `Record`
@@ -18,8 +24,8 @@ export type RangeKey = '30d' | '90d' | '1y' | 'all';
  * (there is no index signature involved), so lookups below are `number | null`, never
  * `... | undefined`.
  */
-const RANGE_DAYS: Record<RangeKey, number | null> = { '30d': 30, '90d': 90, '1y': 365, all: null };
-const RANGE_LABELS: Record<RangeKey, string> = { '30d': '30 d', '90d': '90 d', '1y': '1 y', all: 'All' };
+const RANGE_DAYS: Record<RangeKey, number | null> = { '7d': 7, '30d': 30, '90d': 90 };
+const RANGE_LABELS: Record<RangeKey, string> = { '7d': '7 days', '30d': '30 days', '90d': '90 days' };
 
 export const RANGE_OPTIONS: { value: RangeKey; label: string }[] = (
   Object.keys(RANGE_LABELS) as RangeKey[]
@@ -152,6 +158,61 @@ export function macroAverage(points: readonly MacroDayPoint[]): number {
   const logged = points.filter((p): p is { day: DayKey; grams: number } => p.grams !== null);
   if (logged.length === 0) return 0;
   return Math.round(logged.reduce((sum, p) => sum + p.grams, 0) / logged.length);
+}
+
+/* ------------------------------------------------------------------ *
+ * Macro split (share of calories)                                     *
+ * ------------------------------------------------------------------ */
+
+export interface MacroCalorieSplit {
+  /** Percent of calories from each macro, integers summing to exactly 100. */
+  protein: number;
+  carbs: number;
+  fat: number;
+  /** Days inside the range that were actually logged — the split's real sample size. */
+  loggedDays: number;
+}
+
+/**
+ * What share of the range's calories came from each macro (docs/DESIGN.md §7.5).
+ *
+ * Deliberately *not* `MacroTrendsChart` in another shape: that one plots grams over time,
+ * where 40 g of fat and 40 g of carbs draw the same height while carrying 360 vs 160 kcal.
+ * This converts to energy first (4/4/9 kcal per gram) so the three shares are comparable,
+ * which is the only reading under which "where the calories come from" means anything.
+ *
+ * The denominator is the summed *macro* energy, not the stored `kcal`. The two disagree
+ * slightly — a food's kcal comes from its own label, not from 4/4/9 of its macros — and
+ * dividing by the label total would leave the segments failing to reach 100%. Returns
+ * null when no day in the range was logged, so the caller shows an empty state rather
+ * than a bar built from nothing.
+ */
+export function selectMacroCalorieSplit(
+  dayTotals: ReadonlyMap<DayKey, Macros>,
+  days: readonly DayKey[],
+): MacroCalorieSplit | null {
+  let protein = 0;
+  let carbs = 0;
+  let fat = 0;
+  let loggedDays = 0;
+
+  for (const day of days) {
+    const totals = dayTotals.get(day);
+    if (!totals) continue;
+    loggedDays += 1;
+    protein += totals.protein * 4;
+    carbs += totals.carbs * 4;
+    fat += totals.fat * 9;
+  }
+
+  const total = protein + carbs + fat;
+  if (loggedDays === 0 || total <= 0) return null;
+
+  // Round two shares and derive the third, so the legend always reads 100% and the bar
+  // always fills — three independent `Math.round`s can land on 99% or 101%.
+  const proteinPct = Math.round((protein / total) * 100);
+  const carbsPct = Math.round((carbs / total) * 100);
+  return { protein: proteinPct, carbs: carbsPct, fat: 100 - proteinPct - carbsPct, loggedDays };
 }
 
 /* ------------------------------------------------------------------ *

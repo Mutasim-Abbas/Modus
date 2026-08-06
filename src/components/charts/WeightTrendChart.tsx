@@ -180,7 +180,7 @@ export function WeightTrendChart({ days, readings, deltaKg, goal }: WeightTrendC
         legend={
           <p className="text-[11px] leading-relaxed text-fm-text-faint">
             kg — axis is zoomed to the visible range.
-            {hasAverage ? ' Gold line is the 7-day average; grey dots are individual readings.' : ''}
+            {hasAverage ? ' Violet line is the 7-day average; grey dots are individual readings.' : ''}
           </p>
         }
       />

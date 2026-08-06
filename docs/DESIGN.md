@@ -37,7 +37,7 @@ severity 1.0) and the raw verdicts are pasted in §4.
 
 The frontend developer must not deviate from these without coming back to this document.
 
-1. **Legibility beats novelty.** the project plan says real users. If a visual effect and a number
+1. **Legibility beats novelty.** The project plan says real users. If a visual effect and a number
    ever compete, the number wins. Every effect in here has an off-switch that leaves the app
    fully usable.
 2. **No glass, no blur, no gradient, no 3D behind any number or chart.** Glass is allowed on
@@ -66,7 +66,7 @@ The frontend developer must not deviate from these without coming back to this d
 
 ## 1. The three directions
 
-the project plan §5 requires 2–3 named directions with full hex tokens, one recommended, and an
+The project plan §5 requires 2–3 named directions with full hex tokens, one recommended, and an
 argument if the gold-on-dark identity is replaced. Here they are. **Direction A is recommended
 and the rest of this document specifies it in full.** B and C are given with complete token sets
 so switching later is a token-file swap, not a redesign.
@@ -90,7 +90,7 @@ surface steps and one shadow scale; glass is used only on nav chrome, where the 
 under it is the point (§3.6).
 
 **Why it wins here.**
-- It is Mutasim's identity, built twice by him. the project plan names it as *the* reference. There
+- It is Mutasim's identity, built twice by him. The project plan names it as *the* reference. There
   is no external reference that beats "the thing the owner already made and cares about".
 - Warm near-black is genuinely correct for this product: a PWA opened at 06:00 before a workout
   and at 23:00 after dinner. It is OLED-cheap and it does not glare.
@@ -792,7 +792,7 @@ complete enough to build without a library.
 
 ## 5. Information architecture
 
-the project plan §4 bounds: max 5 primary destinations, Progress must be primary, Plan/History/
+The project plan §4 bounds: max 5 primary destinations, Progress must be primary, Plan/History/
 Profile may live under *More*. Final IA:
 
 ### Primary (phone bottom tab bar — exactly 5)
@@ -993,24 +993,38 @@ Unchanged in structure (6 steps: sex, age, height, weight, activity, goal); reto
 
 ### 7.2 Today / Dashboard — `/`
 
-**Phone** (single column, `[span 4]` each):
-1. Header: h1 "Today", date, sync chip.
-2. **Hero card** — calorie ring (132 px) + "Remaining 660 kcal" `--fm-t-metric-md` + 3 macro bars.
-3. **Quick actions row** — 3 chips: `+ Log food` · `Scan a meal` · `Copy yesterday`. 44 px tall.
-4. **Today's meals** — grouped by Breakfast / Lunch / Dinner / Snack; each group is a sub-header
-   (`--fm-t-eyebrow`) + rows. Empty groups are not rendered.
-5. **Streak tile** (compact) — "12-day streak" + status dot, links to Progress.
-6. Bottom spacer 96 px.
+**Header** (both widths) — eyebrow `Today · <long date>`, then the h1 *is* the headline figure:
+`"2711 kcal left"`, or `"180 kcal over"` once past target. Number and unit are one string so a
+screen reader reads them as one fact rather than two fragments, and going over is named plainly
+instead of being flattened into a congratulatory "Target reached" that would read the same at
+4 kcal spare as at 400 over. Sync chip and the brand mark sit on the inline-end.
 
-**Desktop** (bento):
-- `[span 5]` hero ring card (taller, ring 168 px)
-- `[span 4]` three stat tiles stacked: Protein / Carbs / Fat, each `label · value · target ·
-  mini progress bar`
-- `[span 3]` "Remaining" tile — `--fm-t-metric-xl` hero number, the one hero figure on the screen
-- `[span 8]` Today's meals table
-- `[span 4]` right column: Quick add (favourites, 6 max) + Copy yesterday + Streak tile
+**Phone** — one column:
+1. **Energy budget card** — "Energy budget" eyebrow with the goal chip opposite it
+   (`Cutting · −20%` / `Maintaining` / `Bulking · +15%`); calorie ring 208 px, 15 px stroke,
+   repeating the headline figure at its centre; then protein / carbs / fat bars.
+2. **Stat tiles** — three across: Eaten (`N`, "X% of target") · Logged (count, "entries today")
+   · Protein (`X%`, "N g to go" or "target met").
+3. **Quick-add rail** — "Log again": a horizontally scrolling row of up to 8 recently logged
+   foods, each `name` + `120 g · 107 kcal`, one tap to re-add at the portion used last time.
+   Renders nothing at all when there is no history, rather than an empty rail. A shortcut, never
+   the only route — the same foods are in Log's "Recent" view, which is where the portion changes.
+4. **Today's meals** — grouped Breakfast / Lunch / Dinner / Snack; empty groups are not rendered.
 
-**States:** loading = skeletons matching card geometry (ring → 132 px circle, `#221F1B`, 1.4 s
+**Desktop** — two columns, `minmax(320px,1fr)` + `minmax(360px,1.3fr)`:
+- inline-start: the energy budget card, ring 244 px at 14 px stroke
+- inline-end, stacked: the three stat tiles → **Last 14 days** → Today's meals
+
+**The slot between the tiles and the meals differs by width, because the mocks do.** Desktop puts
+the 14-day calorie trend there (§4.2.2's chart, target line and all, with an `avg` readout
+averaged over the days actually logged — dividing by 14 would read as "you ate 900 kcal" after a
+week away). Phone puts the quick-add rail there and keeps its trend on Insights. They are chosen
+from the breakpoint rather than hidden with CSS, so only one is ever in the DOM.
+
+**No log-food CTA on this screen.** The dock's raised "+" is permanently on screen; a second
+button for the same action is noise. The empty state says where to tap instead.
+
+**States:** loading = skeletons matching card geometry (ring → circle of the same diameter, 1.4 s
 shimmer, or static under reduced motion). Empty = E-3 (§9). Error = never; local data cannot fail
 to load, and a corrupt store falls back to the migration-recovery path with E-9.
 
@@ -1096,8 +1110,13 @@ Unchanged flow (pick photo → analysing → editable review → log), retokenis
    ("−2.8 kg in 90 days", `--fm-ok` + `▼`), `Add today's weight` secondary button.
 3. **Calories** card — §4.2.2, 180 px tall.
 4. **Macro trends** card — §4.2.3, three 64 px facets.
-5. **Weekly averages** card — §4.2.4, up to 8 rows, "Show more" after 4.
-6. **Streaks** card — §4.2.5 stat tile + calendar heatmap.
+5. **Macro split** card — one 16 px stacked bar of protein/carbs/fat as a share of
+   *calories* (`p×4`, `c×4`, `f×9`), plus a legend carrying each percentage. Not a
+   restatement of Macro trends: that one is grams over time, where 40 g of fat and 40 g of
+   carbs draw the same height while carrying 360 vs 160 kcal. Two shares are rounded and
+   the third derived, so the legend always totals 100% and the bar always fills.
+6. **Weekly averages** card — §4.2.4, up to 8 rows, "Show more" after 4.
+7. **Streaks** card — §4.2.5 stat tile + calendar heatmap.
 
 **Desktop bento:**
 - `[span 12]` range control row (segmented + a date-range readout on the inline-end)
@@ -1105,6 +1124,8 @@ Unchanged flow (pick photo → analysing → editable review → log), retokenis
 - `[span 4]` stat tiles column: current weight · 90-day change · streak · days logged
 - `[span 6]` Calories chart
 - `[span 6]` Macro trends (three facets side by side)
+- `[span 12]` Macro split — full width rather than half: the bar is naturally wide and only
+  16 px tall, and its three legend entries sit on one line at every breakpoint
 - `[span 7]` Weekly averages table
 - `[span 5]` Streak calendar
 
@@ -1590,7 +1611,7 @@ truncate gracefully:
 
 ### The honest reading of the budget
 
-the project plan §5 caps this at **≤ ~150 KB gzipped**, off the first-paint path, disabled under
+The project plan §5 caps this at **≤ ~150 KB gzipped**, off the first-paint path, disabled under
 reduced motion, with a static fallback, and *never* required to read a number. A tree-shaken
 Three.js core alone lands in the ~110–150 KB gzipped range before you add React Three Fiber and
 drei — so **R3F/Three.js does not fit this budget** and is out. The

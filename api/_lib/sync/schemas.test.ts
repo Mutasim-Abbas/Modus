@@ -71,7 +71,7 @@ describe('pushRequestSchema', () => {
   });
 
   /*
-   * the internal security audit F-06 — CPU amplification. `z.array(x).max(500)` parses every element
+   * The internal security audit F-06 — CPU amplification. `z.array(x).max(500)` parses every element
    * BEFORE the length check fires, so a 2 MB array of junk was measured at ~0.9 s of CPU
    * and 400 001 issue objects for a request that is rejected anyway — and api/sync/* has
    * no rate limit of its own.

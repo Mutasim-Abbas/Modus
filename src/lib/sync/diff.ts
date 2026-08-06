@@ -263,7 +263,7 @@ export function applyPushResultToAcked(
  * the comparison — into `acked`, using each row's OWN `updatedAt` (the value that is now
  * sitting in the local row, not the acked map's previous value).
  *
- * the internal security audit F-16: without this, a row that only ever arrives via a pull
+ * The internal security audit F-16: without this, a row that only ever arrives via a pull
  * is permanently newer than its (missing) `acked` entry, so `buildOutbox` classifies it
  * dirty forever and echoes it straight back to the server on every cycle. Rows where the
  * LOCAL copy won are never in `applied` in the first place (see

@@ -11,7 +11,7 @@ import {
 
 /**
  * NO MOCKED SUCCESS RESPONSES — pure local behaviour, the way a guest uses it.
- * the project plan §8.1 ("new coverage for … edit/backdate") driven in a real browser.
+ * The project plan §8.1 ("new coverage for … edit/backdate") driven in a real browser.
  */
 
 const BANANA = 'Banana, fruit, 89 kcal per 100 g';

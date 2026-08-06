@@ -103,7 +103,7 @@ Two different UUID strategies are used, deliberately:
   pull has to be able to tell "this row was deleted since your last cursor" apart from
   "this row was never touched," and only a tombstone can do that (the project plan §2,
   "Sync model").
-- **`users` is hard-deleted.** the project plan §4.1 is explicit: "delete account (real
+- **`users` is hard-deleted.** The project plan §4.1 is explicit: "delete account (real
   deletion, not a flag)." There is no `deleted_at` on `users`. Deleting the row is what
   cascades to every owned row (§4.1) — a real `DELETE`, not a flag flip, is what makes
   that cascade actually happen at the database level rather than needing every future
@@ -176,7 +176,7 @@ cascade (§4.1 cascades below) does the rest inside one transaction.
 
 - `UNIQUE (email)` — `users_email_key`. One account per email.
 - `CHECK (email = lower(email))` — `users_email_lowercase`. **Deviation from
-  the project plan §3's sketch**, which wrote `email citext unique`. `citext` needs a
+  The project plan §3's sketch**, which wrote `email citext unique`. `citext` needs a
   Postgres extension (`CREATE EXTENSION citext`), which is one more thing that has to
   be enabled on whatever database this ends up on (Neon today, PGlite in tests) and one
   more thing to verify rather than assume. Storing the email pre-lowercased and
@@ -402,7 +402,7 @@ and `CHECK (jsonb_typeof(common_portions) = 'array')` — a database-level guara
 this column is always a JSON array, never an object or a scalar, so `P2.3`/the client
 never has to defensively type-check its shape on the way out.
 
-**Deliberately not added: full-text search.** the project plan's "modern capabilities"
+**Deliberately not added: full-text search.** The project plan's "modern capabilities"
 guidance mentions full-text search as a general option; it is **not** added here (no
 `tsvector` column, no GIN index) because nothing in scope queries it — the only search
 surface in the project plan's v3 plan is `src/lib/search.ts`, entirely client-side, over
@@ -445,7 +445,7 @@ One row per user. Synced.
 | `reduced_motion` | `boolean`, default `false` | Mirrors `types.ts`'s `Settings.reducedMotion`. |
 | `updated_at`, `deleted_at` | see §2.6 | |
 
-**Deliberately NOT included: `theme`.** the project plan §3's bounding sketch lists a
+**Deliberately NOT included: `theme`.** The project plan §3's bounding sketch lists a
 `theme` column. It is cut here, on purpose, for the **identical reason** the project plan
 §4 already cut `Settings.units: 'metric'` from the client type: there is exactly one
 theme in this codebase today. A `theme` column with nothing to hold but one constant
@@ -455,7 +455,7 @@ a deliberate deviation from the sketch, not an oversight — recorded here, and 
 comment on `userSettings` in `schema.ts`, so it's visible rather than silently dropped.
 Add it back in a real migration alongside the UI feature that needs it.
 
-**Also NOT included: `Settings.units`.** the project plan §4 already cut this from the
+**Also NOT included: `Settings.units`.** The project plan §4 already cut this from the
 client type entirely (dead single-value union); there is nothing to sync, so there is
 nothing to store.
 
@@ -466,7 +466,7 @@ query shape across all six synced tables" reasoning as `profiles` (§4.4).
 
 ## 5. Cascades — the full picture, and the one exception
 
-the project plan P2.1's acceptance criterion: **"deleting a user cascades to every row
+The project plan P2.1's acceptance criterion: **"deleting a user cascades to every row
 they own, proven by a test, not asserted."** Every foreign key to `users.id` in this
 schema is declared `ON DELETE CASCADE`:
 
@@ -497,7 +497,7 @@ conscious trade-off between "delete everything this user owns" and "don't let ac
 deletion reset an attacker's clock," resolved in favour of the latter because
 `auth_attempts` rows contain no data more sensitive than "this email/IP attempted this
 action at this time" — not the kind of personal data the "real deletion" promise in
-the project plan §4.1 is about.
+The project plan §4.1 is about.
 
 ---
 

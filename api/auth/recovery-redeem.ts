@@ -24,7 +24,7 @@ import { toPublicUser } from '../_lib/auth/users.js';
  * and cost — using the identical dummy-hash technique as api/auth/login.ts, for the
  * same reason: this endpoint proves account ownership without a password, so it gets
  * the same no-enumeration treatment as a matter of consistent policy, even though
- * the project plan's acceptance criterion names login specifically.
+ * The project plan's acceptance criterion names login specifically.
  */
 export function createHandler(overrides: AuthHandlerDeps = {}) {
   return async function handler(request: Request): Promise<Response> {

@@ -312,7 +312,7 @@ describe('F-11 — SESSION_PEPPER has a length floor, and a short one is 503 not
     vi.stubEnv('SESSION_PEPPER', 'a'.repeat(31));
     expect((await handler(req('/api/auth/signup', 'POST', {}, { email: 'b@example.com', password: 'password123' }))).status).toBe(503);
 
-    // 44 chars = base64 of 32 bytes; 64 chars = hex of 32 bytes. the project plan §2 tells
+    // 44 chars = base64 of 32 bytes; 64 chars = hex of 32 bytes. The project plan §2 tells
     // the operator to generate exactly that, so neither encoding may be rejected.
     vi.stubEnv('SESSION_PEPPER', 'a'.repeat(44));
     expect((await handler(req('/api/auth/signup', 'POST', {}, { email: 'c@example.com', password: 'password123' }))).status).toBe(201);

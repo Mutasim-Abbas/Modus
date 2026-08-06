@@ -10,7 +10,7 @@ import {
 } from './support/app';
 
 /**
- * REAL-BACKEND-FREE — nothing here needs a server at all. the project plan §8.3: "an
+ * REAL-BACKEND-FREE — nothing here needs a server at all. The project plan §8.3: "an
  * existing v2 user with localStorage data … loses nothing."
  *
  * The payload is `src/lib/__fixtures__/v2-payload.ts`, captured from the actual shipped
@@ -20,7 +20,7 @@ import {
  *
  * NOTE ON SCOPE: this proves the v2 → v3 migration under **guest** conditions. Running
  * the same migration *under sync* has never been reviewed or tested — see
- * the internal security audit §9 and the Task 8 sign-off in the project plan §8.
+ * The internal security audit §9 and the Task 8 sign-off in the project plan §8.
  */
 
 /** Every entry in the fixture, with the day it must still be on afterwards. */

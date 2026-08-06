@@ -2,9 +2,11 @@
 
 ## Status
 
-**Modus is live at [fitmacro.vercel.app](https://fitmacro.vercel.app)**, running on Vercel with a
-hosted Neon Postgres database. Guest mode, accounts and cross-device sync are all active
-there.
+**Modus is live at [modus-tracker.vercel.app](https://modus-tracker.vercel.app)**, running
+on Vercel with a hosted Neon Postgres database. Guest mode, accounts and cross-device sync
+are all active there. **[fitmacro.vercel.app](https://fitmacro.vercel.app) is the same
+deployment** under the product's former name, kept live so pre-rename users keep their
+browser-local data — both hostnames are in scope.
 
 Accounts are opt-in, not required. As a guest the app works fully offline and everything
 you log stays in your browser's local storage on your device — nothing is sent anywhere. On
@@ -24,7 +26,7 @@ Please report privately rather than opening a public issue — use GitHub's
 Useful things to include: what you did, what happened, what you expected, and the commit
 you were on. A proof of concept is welcome but not required.
 
-Please test locally with `npm run dev` rather than against `fitmacro.vercel.app`. The live
+Please test locally with `npm run dev` rather than against either live hostname. The live
 instance has a real database behind it and real accounts in it. If a finding genuinely
 cannot be shown except in production, keep it to a single account you created yourself,
 and no automated scanning, load testing or anything destructive.
@@ -51,6 +53,6 @@ Two behaviours are deliberate and worth stating up front, so they need not be re
 
 ## Internal audit
 
-the internal security audit is a detailed internal review of this codebase, written during
+The internal security audit is a detailed internal review of this codebase, written during
 development. It is a working engineering document rather than a summary for users, and it
 records what has **not** been verified as carefully as what has.

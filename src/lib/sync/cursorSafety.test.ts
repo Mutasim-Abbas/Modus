@@ -11,7 +11,7 @@ import type { AccountSyncState } from '@/lib/sync/persist';
  * `GET /api/sync/pull` response may.
  *
  * Scenario, taken directly from the walkthrough in docs/API.md and
- * the internal security audit §3.3:
+ * The internal security audit §3.3:
  *   1. Devices A and B are both signed in to the same account. A's saved pull cursor
  *      for `entries` is empty (T0 — nothing pulled yet).
  *   2. Device B logs a row. The (mock) server assigns it `updated_at = T1`.

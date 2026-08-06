@@ -36,7 +36,10 @@ const TOKEN_NAMES = [
   'fm-hover', 'fm-ok', 'fm-ok-bg', 'fm-warn', 'fm-warn-bg', 'fm-danger', 'fm-danger-bg',
   'fm-info', 'fm-info-bg', 'fm-data-protein', 'fm-data-carbs', 'fm-data-fat',
   'fm-data-energy', 'fm-data-grid', 'fm-data-axis', 'fm-data-ref', 'fm-border-field',
-  'fm-border-neutral',
+  /* `fm-border` and `fm-border-strong` were in use before they were registered here.
+     Unregistered, `border-fm-border-strong` emitted nothing and silently fell back to
+     borderColor.DEFAULT (--fm-border) — so the accent-tinted border never rendered. */
+  'fm-border', 'fm-border-strong', 'fm-border-neutral',
   'fm-surface-0', 'fm-surface-1', 'fm-surface-2', 'fm-surface-3', 'fm-surface-4',
   'fm-violet-200', 'fm-violet-300', 'fm-violet-400', 'fm-violet-500', 'fm-violet-600',
   'fm-cyan-300', 'fm-cyan-400', 'fm-cyan-600',

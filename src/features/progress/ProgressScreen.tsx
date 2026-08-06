@@ -8,6 +8,7 @@ import { Button } from '@/components/Button';
 import { WeightTrendChart } from '@/components/charts/WeightTrendChart';
 import { CaloriesChart } from '@/components/charts/CaloriesChart';
 import { MacroTrendsChart } from '@/components/charts/MacroTrendsChart';
+import { MacroSplitBar } from '@/components/charts/MacroSplitBar';
 import { WeeklyAveragesChart } from '@/components/charts/WeeklyAveragesChart';
 import { StreakCalendar } from '@/components/charts/StreakCalendar';
 import { WeightEntryForm } from '@/features/progress/WeightEntryForm';
@@ -20,6 +21,7 @@ import {
   resolveRangeDays,
   selectCaloriesSeries,
   selectDayTotalsMap,
+  selectMacroCalorieSplit,
   selectMacroSeries,
   selectWeightPointsInRange,
   weeksWithActivity,
@@ -30,6 +32,7 @@ import type { Macros } from '@/types';
 import { selectLiveWeights, selectLoggedDays } from '@/lib/store';
 import { lastNDays, toDayKey } from '@/lib/date';
 import { useAppState } from '@/lib/useStore';
+import { useShellBreakpoint } from '@/app/useBreakpoint';
 
 const STREAK_CALENDAR_WEEKS = 10; // 70 days — a screenful on phone, a real stretch on desktop
 const STREAK_LOOKBACK_DAYS = 400; // generous enough that no real streak ever gets truncated
@@ -55,6 +58,15 @@ export function ProgressScreen(): JSX.Element {
   const [range, setRange] = useState<RangeKey>('90d');
   const [addingWeight, setAddingWeight] = useState(false);
 
+  /**
+   * The phone mock's Insights is exactly four cards — weight, calories per day, where the
+   * calories come from, consistency. The stat tiles, macro trends and weekly averages are
+   * desktop's, where the bento has room for them; stacked on a 402 px screen they turn one
+   * scrollable answer into seven and bury the consistency calendar three screens down.
+   * Nothing is removed from the app — the same cards render at ≥768 px.
+   */
+  const isPhone = useShellBreakpoint() === 'phone';
+
   const targets = state.targets;
 
   const dayTotals = useMemo(() => selectDayTotalsMap(state), [state]);
@@ -68,6 +80,7 @@ export function ProgressScreen(): JSX.Element {
   const proteinSeries = useMemo(() => selectMacroSeries(dayTotals, rangeDays, 'protein'), [dayTotals, rangeDays]);
   const carbsSeries = useMemo(() => selectMacroSeries(dayTotals, rangeDays, 'carbs'), [dayTotals, rangeDays]);
   const fatSeries = useMemo(() => selectMacroSeries(dayTotals, rangeDays, 'fat'), [dayTotals, rangeDays]);
+  const macroSplit = useMemo(() => selectMacroCalorieSplit(dayTotals, rangeDays), [dayTotals, rangeDays]);
 
   const weeklyRowCount = useMemo(
     () => Math.min(MAX_WEEKLY_ROWS, Math.max(1, weeksWithActivity(dayTotals, MAX_WEEKLY_ROWS, today))),
@@ -106,11 +119,23 @@ export function ProgressScreen(): JSX.Element {
         <ScreenHeader
           eyebrow="Insights"
           title="How it’s going"
-          subtitle="Weight, where your calories come from, and how consistent you’ve been — drawn only from days you actually logged."
+          {...(isPhone
+            ? {}
+            : {
+                subtitle:
+                  'Weight, where your calories come from, and how consistent you’ve been — drawn only from days you actually logged.',
+              })}
           action={<SyncChip />}
         />
 
-        <Segmented legend="Date range" options={RANGE_OPTIONS} value={range} onChange={setRange} columns={4} />
+        <Segmented
+          legend="Date range"
+          hideLegend
+          options={RANGE_OPTIONS}
+          value={range}
+          onChange={setRange}
+          columns={3}
+        />
       </div>
 
       <Card className="flex flex-col gap-4 lg:col-span-8">
@@ -127,6 +152,7 @@ export function ProgressScreen(): JSX.Element {
         )}
       </Card>
 
+      {isPhone ? null : (
       <div className="grid grid-cols-2 gap-3.5 lg:col-span-4">
         {/* "Current weight", not the mock's bare "Current": this tile sits in a 2×2 block
             away from the chart's own title, so it has to name its own subject. */}
@@ -151,12 +177,14 @@ export function ProgressScreen(): JSX.Element {
         />
         <StatTile label="Days logged" value={String(totalLoggedDays)} />
       </div>
+      )}
 
       <Card className="flex flex-col gap-4 lg:col-span-6">
         <h2 className="text-base font-bold text-fm-text">Calories per day</h2>
         <CaloriesChart series={caloriesSeries} targetKcal={targets.kcal} />
       </Card>
 
+      {isPhone ? null : (
       <Card className="flex flex-col gap-4 lg:col-span-6">
         <h2 className="text-base font-bold text-fm-text">Macro trends</h2>
         <MacroTrendsChart
@@ -167,16 +195,29 @@ export function ProgressScreen(): JSX.Element {
           targets={{ protein: targets.protein, carbs: targets.carbs, fat: targets.fat }}
         />
       </Card>
+      )}
 
+      {/* Full width rather than the mock's half: the bar is naturally wide and only 16px
+          tall, and the three legend entries sit on one line at every breakpoint here. */}
+      <Card className="flex flex-col gap-4 lg:col-span-12">
+        <div>
+          <h2 className="text-base font-bold text-fm-text">Where the calories come from</h2>
+          <p className="mt-1.5 text-xs text-fm-text-subtle">Average share, this range</p>
+        </div>
+        <MacroSplitBar split={macroSplit} />
+      </Card>
+
+      {isPhone ? null : (
       <Card className="flex flex-col gap-4 lg:col-span-7">
         <h2 className="text-base font-bold text-fm-text">Weekly averages</h2>
         <WeeklyAveragesChart weeks={weeks} targetKcal={targets.kcal} />
       </Card>
+      )}
 
       <Card className="flex flex-col gap-4 lg:col-span-5">
-        <h2 className="text-base font-bold text-fm-text">Streaks</h2>
+        <h2 className="text-base font-bold text-fm-text">Consistency</h2>
         <p className="text-xs leading-relaxed text-fm-text-subtle">
-          A day counts when you log at least one entry and land within ±15% of your calorie target.
+          A day counts when you log and land within ±15% of target.
         </p>
         <StreakCalendar days={streakDaysVisual} targetKcal={targets.kcal} streakCount={streakCount} />
       </Card>

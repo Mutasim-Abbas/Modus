@@ -7,9 +7,11 @@ import {
   computeWeightSeries,
   earliestActivityDay,
   macroAverage,
+  RANGE_OPTIONS,
   resolveRangeDays,
   selectCaloriesSeries,
   selectDayTotalsMap,
+  selectMacroCalorieSplit,
   selectMacroSeries,
   selectWeightPointsInRange,
   weeksWithActivity,
@@ -75,16 +77,20 @@ describe('resolveRangeDays', () => {
     expect(days[days.length - 1]).toBe(today);
   });
 
-  it('"all" with zero activity returns just today rather than an empty/huge range', () => {
-    expect(resolveRangeDays(defaultState(), 'all', today)).toEqual([today]);
+  it('returns exactly 7 days for the shortest range', () => {
+    const days = resolveRangeDays(defaultState(), '7d', today);
+    expect(days).toHaveLength(7);
+    expect(days[days.length - 1]).toBe(today);
   });
 
-  it('"all" spans from the earliest real activity to today', () => {
-    const store = createStore(defaultState());
-    store.logWeight(80, '2026-07-01');
-    const days = resolveRangeDays(store.getState(), 'all', today);
-    expect(days[0]).toBe('2026-07-01');
-    expect(days[days.length - 1]).toBe(today);
+  it('every offered range resolves to a real window ending today', () => {
+    // Guards the `RangeKey` union against a key being added to the picker without a
+    // matching entry in RANGE_DAYS, which would resolve to an empty chart.
+    for (const { value } of RANGE_OPTIONS) {
+      const days = resolveRangeDays(defaultState(), value, today);
+      expect(days.length).toBeGreaterThan(0);
+      expect(days[days.length - 1]).toBe(today);
+    }
   });
 });
 
@@ -182,6 +188,70 @@ describe('calories and macro series', () => {
 
   it('macroAverage is 0 with nothing logged', () => {
     expect(macroAverage([{ day: today, grams: null }])).toBe(0);
+  });
+});
+
+describe('selectMacroCalorieSplit', () => {
+  it('is null when no day in the range was logged', () => {
+    expect(selectMacroCalorieSplit(new Map(), lastNDays(30, today))).toBeNull();
+  });
+
+  it('is null when the range covers only days outside the log', () => {
+    const store = createStore(defaultState());
+    store.addEntry(entry, '2026-01-01');
+    const totals = selectDayTotalsMap(store.getState());
+    expect(selectMacroCalorieSplit(totals, lastNDays(30, today))).toBeNull();
+  });
+
+  it('weighs macros by energy (4/4/9), not by grams', () => {
+    const store = createStore(defaultState());
+    // Equal grams of each macro: 100/100/100. By grams that is 33/33/33; by energy it
+    // is 400/400/900 kcal — 24/24/53. Getting 33% here would mean the conversion is
+    // missing, which is the entire point of this card.
+    store.addEntry(
+      { ...entry, protein: 100, carbs: 100, fat: 100, kcal: 1700 },
+      today,
+    );
+    const totals = selectDayTotalsMap(store.getState());
+    const split = selectMacroCalorieSplit(totals, lastNDays(30, today));
+
+    expect(split).not.toBeNull();
+    expect(split?.protein).toBe(24);
+    expect(split?.carbs).toBe(24);
+    expect(split?.fat).toBe(52);
+  });
+
+  it('always sums to exactly 100, even where independent rounding would not', () => {
+    const store = createStore(defaultState());
+    // 1/3 each by energy: three shares that each round to 33 and total 99.
+    store.addEntry({ ...entry, protein: 90, carbs: 90, fat: 40, kcal: 1080 }, today);
+    const totals = selectDayTotalsMap(store.getState());
+    const split = selectMacroCalorieSplit(totals, lastNDays(30, today));
+
+    expect(split).not.toBeNull();
+    expect((split?.protein ?? 0) + (split?.carbs ?? 0) + (split?.fat ?? 0)).toBe(100);
+  });
+
+  it('pools the whole range and counts only the days actually logged', () => {
+    const store = createStore(defaultState());
+    store.addEntry({ ...entry, protein: 50, carbs: 0, fat: 0 }, today);
+    store.addEntry({ ...entry, protein: 0, carbs: 50, fat: 0 }, addDays(today, -1));
+    const totals = selectDayTotalsMap(store.getState());
+    const split = selectMacroCalorieSplit(totals, lastNDays(30, today));
+
+    // Two logged days inside a 30-day window: the denominator is 2, not 30.
+    expect(split?.loggedDays).toBe(2);
+    expect(split?.protein).toBe(50);
+    expect(split?.carbs).toBe(50);
+    expect(split?.fat).toBe(0);
+  });
+
+  it('is null when logged days exist but carry no macros at all', () => {
+    const store = createStore(defaultState());
+    store.addEntry({ ...entry, protein: 0, carbs: 0, fat: 0, kcal: 0 }, today);
+    const totals = selectDayTotalsMap(store.getState());
+    // A zero denominator must not become NaN% segments.
+    expect(selectMacroCalorieSplit(totals, lastNDays(30, today))).toBeNull();
   });
 });
 

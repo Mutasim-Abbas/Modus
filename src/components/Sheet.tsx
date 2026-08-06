@@ -52,7 +52,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps): JSX.Eleme
   return createPortal(
     <AnimatePresence>
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+        <div key="sheet" className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
           <motion.div
             className="absolute inset-0 bg-[color:var(--fm-scrim)]"
             onClick={onClose}

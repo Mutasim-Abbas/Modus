@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -33,6 +33,29 @@ const entry = {
   source: 'food-db' as const,
 };
 
+/**
+ * jsdom reports every media query as non-matching, which `useShellBreakpoint` correctly
+ * reads as "phone" — and the phone mock's Insights is only four cards. The stat tiles,
+ * macro trends and weekly averages are desktop's, so any test asserting those has to say
+ * so by stubbing the viewport first.
+ */
+function mockDesktopViewport(): void {
+  vi.stubGlobal(
+    'matchMedia',
+    (query: string) =>
+      ({
+        matches: query.includes('1024px') || query.includes('768px'),
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+      }) as MediaQueryList,
+  );
+}
+
 function renderProgress(): void {
   render(
     <MemoryRouter>
@@ -48,15 +71,36 @@ beforeEach(() => {
   store.setProfile(profile);
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe('empty state — the core honesty rule', () => {
   it('shows a real empty state per card, never a fake/demo curve, with no data at all', () => {
+    mockDesktopViewport(); // desktop carries every card, so this covers all six at once
     renderProgress();
 
     expect(screen.getByText(/no weight readings yet/i)).toBeInTheDocument();
     expect(screen.getByText(/nothing logged in this range/i)).toBeInTheDocument();
     expect(screen.getByText(/no macros logged in this range/i)).toBeInTheDocument();
+    expect(screen.getByText(/no split to show yet/i)).toBeInTheDocument();
     expect(screen.getByText(/no weeks logged yet/i)).toBeInTheDocument();
     expect(screen.getByText(/no active streak/i)).toBeInTheDocument();
+  });
+
+  it('phone shows only the four cards the mock has, and their empty states', () => {
+    renderProgress(); // jsdom default = phone
+
+    expect(screen.getByText(/no weight readings yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/nothing logged in this range/i)).toBeInTheDocument();
+    expect(screen.getByText(/no split to show yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no active streak/i)).toBeInTheDocument();
+
+    // Desktop's extras stay off the phone entirely — not merely hidden with CSS.
+    expect(screen.queryByText(/no macros logged in this range/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no weeks logged yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /macro trends/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /weekly averages/i })).not.toBeInTheDocument();
   });
 
   it('does not render an SVG line/bar chart anywhere when there is no data', () => {
@@ -94,12 +138,13 @@ describe('current weight is range-independent', () => {
   it('still shows the true latest reading when it falls outside the selected 30-day range', async () => {
     const user = userEvent.setup();
     const today = toDayKey();
-    store.logWeight(79.1, addDays(today, -45)); // outside the default 90d range's... still inside 90d
+    store.logWeight(79.1, addDays(today, -45)); // inside the default 90-day window
+    mockDesktopViewport(); // "Current weight" is a stat tile, so desktop-only
     renderProgress();
 
-    // Switch to 30 d — the reading from 45 days ago drops out of the chart's window,
+    // Switch to 30 days — the reading from 45 days ago drops out of the chart's window,
     // but "Current weight" must still report it, not go blank.
-    await user.click(screen.getByRole('radio', { name: '30 d' }));
+    await user.click(screen.getByRole('radio', { name: '30 days' }));
 
     expect(await screen.findByText(/no weight readings yet/i)).toBeInTheDocument(); // chart, scoped to 30d
     expect(screen.getByText('79.1 kg')).toBeInTheDocument(); // stat tile, not scoped
