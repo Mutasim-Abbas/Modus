@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import {
+  Camera,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -18,6 +19,8 @@ import type { CustomFood, DayKey, Food, FoodCategory, MealSlot } from '@/types';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { InlineDeleteConfirm } from '@/components/InlineDeleteConfirm';
+import { LinkButton } from '@/components/LinkButton';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { Sheet } from '@/components/Sheet';
 import { FOODS, FOOD_DATA_DISCLAIMER } from '@/data/foods';
 import { foodsByCategory, listCategories, searchFoods } from '@/lib/search';
@@ -382,27 +385,36 @@ export function LogScreen(): JSX.Element {
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="mb-1">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <span className="eyebrow">Log</span>
-            <h1 className="text-2xl font-extrabold leading-tight">Add food</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="lg:hidden">
-              <SyncChip />
-            </div>
+      <ScreenHeader
+        eyebrow="Log"
+        title="Add food"
+        subtitle={`Search ${FOODS.length + customFoods.length} foods, pick a portion, and it lands on ${
+          day === today ? "today's" : `${formatDayLabel(day, today)}'s`
+        } totals.`}
+        action={
+          <>
+            <SyncChip />
+            {/*
+              Scan lives here rather than in the dock: photographing a plate is one way to
+              put food into this screen, alongside searching and copying a day — not a
+              separate place you go. A real link, so it keeps deep-linking and
+              open-in-new-tab; `/scan` is still its own route.
+            */}
+            <LinkButton
+              to="/scan"
+              variant="secondary"
+              className="min-h-[38px] px-3.5 text-[13px] font-semibold"
+            >
+              <Camera size={16} aria-hidden="true" />
+              Scan
+            </LinkButton>
             <Button size="sm" variant="secondary" onClick={() => setCustomFoodSheet({})}>
               <Plus size={16} aria-hidden="true" />
               Custom food
             </Button>
-          </div>
-        </div>
-        <p className="mt-1.5 text-sm leading-relaxed text-gray">
-          Search {FOODS.length + customFoods.length} foods, pick a portion, and it lands on{' '}
-          {day === today ? "today's" : `${formatDayLabel(day, today)}'s`} totals.
-        </p>
-      </header>
+          </>
+        }
+      />
 
       {/* Date stepper — how backdating works (docs/DESIGN.md §7.3). */}
       <div className="flex items-center justify-between gap-2 rounded-md border border-[color:var(--border)] bg-surface-2/60 px-2 py-2">

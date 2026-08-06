@@ -1,13 +1,4 @@
-import {
-  Camera,
-  ClipboardList,
-  History,
-  Home,
-  LayoutGrid,
-  TrendingUp,
-  User,
-  UtensilsCrossed,
-} from 'lucide-react';
+import { LayoutGrid, Sparkles, TrendingUp, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -19,30 +10,24 @@ export interface NavItem {
 }
 
 /**
- * The five primary destinations (docs/DESIGN.md §5) — used by the phone bottom tab bar
- * and the tablet icon rail. Progress is primary; Plan/History/Profile live under More.
+ * The four destinations, and the only nav the app has at any width.
+ *
+ * Nocturne replaces the old three-tier chrome (phone tab bar / tablet icon rail / desktop
+ * sidebar) with a single floating dock, so this list is no longer split per breakpoint —
+ * see `NavDock`. Logging food is deliberately *not* in it: it is the one action the app
+ * exists for, so it gets the raised button in the middle of the dock instead of competing
+ * with the destinations as a fifth peer.
+ *
+ * Route paths are unchanged from v4 — only the labels and the chrome moved. `/progress`
+ * still serves Insights, `/plan` still serves Coach, `/profile` still serves You, so every
+ * existing bookmark, deep link and redirect keeps resolving.
  */
 export const PRIMARY_NAV: readonly NavItem[] = [
-  { to: '/', label: 'Today', icon: Home, end: true },
-  { to: '/log', label: 'Log', icon: UtensilsCrossed, end: false },
-  { to: '/scan', label: 'Scan', icon: Camera, end: false },
-  { to: '/progress', label: 'Progress', icon: TrendingUp, end: false },
-  { to: '/more', label: 'More', icon: LayoutGrid, end: false },
+  { to: '/', label: 'Today', icon: LayoutGrid, end: true },
+  { to: '/progress', label: 'Insights', icon: TrendingUp, end: false },
+  { to: '/plan', label: 'Coach', icon: Sparkles, end: false },
+  { to: '/profile', label: 'You', icon: User, end: false },
 ];
 
-/**
- * The desktop sidebar (≥1024, docs/DESIGN.md §6.3) has room to show every destination —
- * there is no More at this width.
- */
-export const DESKTOP_NAV: readonly NavItem[] = [
-  { to: '/', label: 'Today', icon: Home, end: true },
-  { to: '/log', label: 'Log', icon: UtensilsCrossed, end: false },
-  { to: '/scan', label: 'Scan', icon: Camera, end: false },
-  { to: '/progress', label: 'Progress', icon: TrendingUp, end: false },
-  { to: '/plan', label: 'Plan', icon: ClipboardList, end: false },
-  { to: '/history', label: 'History', icon: History, end: false },
-];
-
-export const DESKTOP_NAV_SECONDARY: readonly NavItem[] = [
-  { to: '/profile', label: 'Profile', icon: User, end: false },
-];
+/** Where the dock's raised centre button goes. */
+export const LOG_ACTION = { to: '/log', label: 'Log food' } as const;

@@ -9,7 +9,10 @@ export function Card({ className, children, ...props }: CardProps): JSX.Element 
   return (
     <div
       className={cn(
-        'rounded-lg border border-[color:var(--border)] bg-surface/90 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)]',
+        /* Nocturne's card: a 28px-radius panel separated from the page by a hairline
+           rather than by a brightness step. `.card` carries the surface, border, radius
+           and padding — see src/index.css. */
+        'card',
         className,
       )}
       {...props}

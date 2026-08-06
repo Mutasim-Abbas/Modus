@@ -5,7 +5,7 @@ import { freshTestDb, TEST_PEPPER, type TestDb } from '../_lib/db/testDb.js';
 import { createHandler as createSignupHandler } from './signup.js';
 import { createHandler as createLoginHandler } from './login.js';
 
-const ORIGIN = 'https://fitmacro.test';
+const ORIGIN = 'https://modus.test';
 
 function req(path: string, body: unknown, headers: Record<string, string> = {}): Request {
   return new Request(`${ORIGIN}${path}`, {

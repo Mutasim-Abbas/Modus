@@ -271,7 +271,7 @@ function emptyManifest(): OutboxManifest {
 
 /**
  * "Merge both" — keep everything from both sides. Per conflicting id, the newer
- * `updatedAt` wins (docs/DESIGN.md §7.11 rule 6: "FitMacro keeps the newer change").
+ * `updatedAt` wins (docs/DESIGN.md §7.11 rule 6: "Modus keeps the newer change").
  * The loser is never queryable again once the winner lands — the same honest
  * last-write-wins trade-off `docs/API.md`'s "Known limitations" already documents for
  * ordinary steady-state sync, not a new rule invented for this screen.

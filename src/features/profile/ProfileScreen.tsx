@@ -20,6 +20,7 @@ import { Segmented } from '@/components/Segmented';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Sparkline } from '@/components/charts/Sparkline';
 import { LinkButton } from '@/components/LinkButton';
+import { cn } from '@/lib/cn';
 import { useAuth } from '@/features/auth/AuthContext';
 import {
   ACTIVITY_LABELS,
@@ -32,6 +33,7 @@ import {
 import { selectLiveWeights } from '@/lib/store';
 import { formatDayLabel } from '@/lib/date';
 import { useAppState, useStore } from '@/lib/useStore';
+import { BRAND } from '@/lib/brand';
 
 const SEX_OPTIONS = [
   { value: 'male' as Sex, label: 'Male' },
@@ -86,7 +88,7 @@ export function ProfileScreen(): JSX.Element {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `fitmacro-export-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `modus-export-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -107,9 +109,9 @@ export function ProfileScreen(): JSX.Element {
   return (
     <div className="flex flex-col gap-5">
       <ScreenHeader
-        eyebrow="Profile"
+        eyebrow="You"
         title="Your details and targets"
-        subtitle="Change anything here and your targets recalculate immediately."
+        subtitle="Change anything and watch the target recompute — the formula is shown, never hidden."
       />
 
       {!store.isPersisted() ? (
@@ -125,7 +127,11 @@ export function ProfileScreen(): JSX.Element {
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-5">
+      {/* The mock's You: the inputs on the inline-start, and what they compute — with the
+          arithmetic shown row by row — on the inline-end. */}
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(320px,1fr)_minmax(340px,1.15fr)]">
+        <Card className="flex flex-col gap-5">
+        <h2 className="text-base font-bold">Your details</h2>
         <Segmented legend="Sex" options={SEX_OPTIONS} value={draft.sex} onChange={(v) => set('sex', v)} />
 
         <div className="grid grid-cols-3 gap-3">
@@ -180,35 +186,92 @@ export function ProfileScreen(): JSX.Element {
           columns={3}
         />
 
-        <Card aria-live="polite" className="border-[color:var(--border-strong)]">
-          <span className="eyebrow">Calculated targets</span>
-          <p className="text-3xl font-extrabold tabular-nums">
-            {preview.kcal} <span className="text-base font-semibold text-gray">kcal / day</span>
-          </p>
-          <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-            {(
-              [
-                ['Protein', preview.protein, 'var(--protein)'],
-                ['Carbs', preview.carbs, 'var(--carbs)'],
-                ['Fat', preview.fat, 'var(--fat)'],
-              ] as const
-            ).map(([label, grams, color]) => (
-              <div key={label} className="rounded-sm bg-black-soft py-2">
-                <dt className="text-[11px] uppercase tracking-wide text-gray">{label}</dt>
-                <dd className="text-lg font-bold tabular-nums" style={{ color }}>
-                  {grams} g
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </Card>
-
         <Button onClick={handleSave} className="w-full">
           <Save size={18} aria-hidden="true" />
           {saved ? 'Saved' : 'Save changes'}
         </Button>
         <div role="status" aria-live="polite" className="sr-only">
           {saved ? 'Profile saved and targets updated.' : ''}
+        </div>
+        </Card>
+
+        <div className="flex flex-col gap-5">
+          <section aria-live="polite" className="card-hero">
+            <h2 className="relative text-base font-bold">How your target is computed</h2>
+            <p className="relative mb-5 mt-1 text-xs text-fm-text-faint">
+              Mifflin-St Jeor → activity → goal → macro split. No invented coefficients.
+            </p>
+
+            <div className="relative flex flex-col gap-3">
+              {(
+                [
+                  ['BMR', 'Mifflin-St Jeor', `${preview.bmr} kcal`, 'text-white'],
+                  [
+                    'TDEE',
+                    `${ACTIVITY_LABELS[draft.activity].title} activity factor`,
+                    `${preview.tdee} kcal`,
+                    'text-white',
+                  ],
+                  [
+                    'Daily target',
+                    `${Math.round(GOAL_ADJUSTMENTS[draft.goal] * 100)}% goal adjustment`,
+                    `${preview.kcal} kcal`,
+                    'text-fm-accent-hover',
+                  ],
+                  [
+                    'Macro split',
+                    `${PROTEIN_G_PER_KG[draft.goal]} g/kg protein · ${Math.round(FAT_KCAL_SHARE * 100)}% kcal fat`,
+                    `${preview.protein} / ${preview.carbs} / ${preview.fat} g`,
+                    'text-fm-accent-2',
+                  ],
+                ] as const
+              ).map(([label, note, value, tone]) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between gap-3.5 rounded-md border border-fm-border-neutral bg-white/[0.03] px-4 py-3.5"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-semibold text-fm-text-muted">{label}</div>
+                    <div className="mt-0.5 text-[11px] text-fm-text-faint">{note}</div>
+                  </div>
+                  <span
+                    className={cn(
+                      'whitespace-nowrap font-num text-[15px] font-bold tabular-nums',
+                      tone,
+                    )}
+                  >
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <Card>
+            <span className="eyebrow">Calculated targets</span>
+            <p className="font-num text-3xl font-bold tabular-nums">
+              {preview.kcal}{' '}
+              <span className="text-base font-semibold text-fm-text-faint">kcal / day</span>
+            </p>
+            <dl className="mt-4 grid grid-cols-3 gap-2.5 text-center">
+              {(
+                [
+                  ['Protein', preview.protein, 'var(--fm-data-protein)'],
+                  ['Carbs', preview.carbs, 'var(--fm-data-carbs)'],
+                  ['Fat', preview.fat, 'var(--fm-data-fat)'],
+                ] as const
+              ).map(([label, grams, color]) => (
+                <div key={label} className="rounded-sm bg-white/[0.04] py-2.5">
+                  <dt className="text-[10px] uppercase tracking-[0.12em] text-fm-text-faint">
+                    {label}
+                  </dt>
+                  <dd className="font-num text-lg font-bold tabular-nums" style={{ color }}>
+                    {grams} g
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Card>
         </div>
       </div>
 
@@ -276,36 +339,13 @@ export function ProfileScreen(): JSX.Element {
         </Card>
       </section>
 
-      <section aria-labelledby="how-it-works">
-        <h2 id="how-it-works" className="mb-2 text-base font-bold">
-          How your targets are calculated
-        </h2>
-        <Card className="text-xs leading-relaxed text-gray">
-          <ol className="flex list-decimal flex-col gap-1.5 ps-4">
-            <li>
-              <span className="text-white">BMR</span> from the Mifflin-St Jeor equation (1990) —{' '}
-              {preview.bmr} kcal.
-            </li>
-            <li>
-              <span className="text-white">TDEE</span> = BMR × {ACTIVITY_LABELS[draft.activity].title.toLowerCase()} factor
-              — {preview.tdee} kcal.
-            </li>
-            <li>
-              <span className="text-white">Goal adjustment</span> of{' '}
-              {Math.round(GOAL_ADJUSTMENTS[draft.goal] * 100)}% → {preview.kcal} kcal.
-            </li>
-            <li>
-              <span className="text-white">Macros</span>: protein {PROTEIN_G_PER_KG[draft.goal]} g/kg
-              of bodyweight, fat {Math.round(FAT_KCAL_SHARE * 100)}% of calories, carbs take the
-              rest (4/4/9 kcal per g).
-            </li>
-          </ol>
-          <p className="mt-3 text-gray-soft">
-            These are population-level estimates. They are not medical advice — talk to a
-            professional before making significant dietary changes.
-          </p>
-        </Card>
-      </section>
+      {/* The step-by-step version of this used to live here as its own section. It is now
+          the "How your target is computed" panel next to the form, where it sits beside
+          the inputs that move it — so only the caveat that the panel cannot carry remains. */}
+      <p className="text-xs leading-relaxed text-fm-text-faint">
+        These are population-level estimates. They are not medical advice — talk to a
+        professional before making significant dietary changes.
+      </p>
 
       <section aria-labelledby="your-data">
         <h2 id="your-data" className="mb-2 text-base font-bold">
@@ -318,7 +358,7 @@ export function ProfileScreen(): JSX.Element {
               <span>
                 <span className="font-semibold text-white">Your data is synced to your account.</span>{' '}
                 Everything you log is stored here on this device and, because you&rsquo;re signed in,
-                also on FitMacro&rsquo;s server so it follows you to another device. Nobody else can see
+                also on {BRAND.name}&rsquo;s server so it follows you to another device. Nobody else can see
                 it. Photos you scan are sent for analysis only and are not stored.
               </span>
             ) : (
@@ -370,7 +410,7 @@ export function ProfileScreen(): JSX.Element {
           <EmptyState
             icon={CloudOff}
             title="Accounts aren't set up on this deployment"
-            description="This copy of FitMacro has no database connected, so there's nothing to sign in to. Everything still works and stays on this device."
+            description={`This copy of ${BRAND.name} has no database connected, so there's nothing to sign in to. Everything still works and stays on this device.`}
           />
         ) : auth.status === 'signed-in' && auth.user ? (
           <Card className="flex items-center justify-between gap-3">
@@ -383,7 +423,7 @@ export function ProfileScreen(): JSX.Element {
           <EmptyState
             icon={UserRoundPlus}
             title="You're not signed in"
-            description="FitMacro is saving everything on this device. Create an account and your log follows you to your phone, laptop and back."
+            description={`${BRAND.name} is saving everything on this device. Create an account and your log follows you to your phone, laptop and back.`}
             action={
               <div className="flex w-full flex-col gap-2 sm:flex-row">
                 <LinkButton to="/auth/sign-up" className="flex-1">

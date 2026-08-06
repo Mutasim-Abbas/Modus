@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { onboard, readStorage, realErrors, STORE_KEY, watchErrors } from './support/app';
 
 /**
- * MOCK-BACKED (happy path only). There is no `ANTHROPIC_API_KEY` on this machine and
+ * MOCK-BACKED (happy path only). There is no `GROQ_API_KEY` on this machine and
  * none may be added (the project notes ground rule 1), so `POST /api/analyze-meal` is
  * fulfilled by Playwright with the exact response shape docs/API.md documents and
  * `src/lib/api.ts`'s `parseAnalyzeResponse` validates. What is genuinely exercised here

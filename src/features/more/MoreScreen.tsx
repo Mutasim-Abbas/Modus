@@ -9,6 +9,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { useAppState, useStore } from '@/lib/useStore';
 import { MoreRow } from '@/features/more/MoreRow';
 import { SyncChip } from '@/features/sync/SyncChip';
+import { BRAND } from '@/lib/brand';
 
 /**
  * The `/more` hub (docs/DESIGN.md §5) — a real screen, not a menu popover. Holds every
@@ -71,7 +72,7 @@ export function MoreScreen(): JSX.Element {
           <EmptyState
             icon={CloudOff}
             title="Accounts aren't set up on this deployment"
-            description="This copy of FitMacro has no database connected, so there's nothing to sign in to. Everything still works and stays on this device."
+            description={`This copy of ${BRAND.name} has no database connected, so there's nothing to sign in to. Everything still works and stays on this device.`}
           />
         )}
       </section>
@@ -119,7 +120,7 @@ export function MoreScreen(): JSX.Element {
 
       <p className="flex items-start gap-2 px-1 text-xs leading-relaxed text-gray-soft">
         <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-        FitMacro v3 — a real macro engine and a curated food database, honest about what it
+        {BRAND.name} v3 — a real macro engine and a curated food database, honest about what it
         doesn't know.
       </p>
     </div>

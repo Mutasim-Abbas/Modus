@@ -2,12 +2,28 @@ import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
+type Variant = 'primary' | 'secondary' | 'danger' | 'cyan';
+
 interface LinkButtonProps {
   to: string;
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: Variant;
   className?: string;
 }
+
+/**
+ * The primary fill is the violet gradient, carrying white ink — the mocks' one loud
+ * control. `cyan` is its counterpart on the scan card only: cyan is dark-on-light, so it
+ * takes near-black ink rather than white, which would sit at 1.9:1.
+ */
+const VARIANTS: Record<Variant, string> = {
+  primary: 'bg-accent-mark font-bold text-white shadow-accent hover:brightness-110',
+  secondary:
+    'border border-fm-border-neutral bg-fm-field font-semibold text-white hover:bg-fm-hover',
+  danger:
+    'border border-[color:var(--danger)] bg-transparent font-semibold text-danger hover:bg-danger/10',
+  cyan: 'bg-cyan-mark font-bold text-[#04212b] shadow-cyan hover:brightness-110',
+};
 
 /**
  * A navigation control that looks like a button but is a real anchor — so it keeps
@@ -24,13 +40,9 @@ export function LinkButton({
     <Link
       to={to}
       className={cn(
-        'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-md px-5 text-[15px]',
-        'transition-[background-color,filter] duration-200 ease-out',
-        variant === 'primary'
-          ? 'bg-gold-mark font-bold text-black hover:brightness-110'
-          : variant === 'danger'
-            ? 'border border-[color:var(--danger)] bg-transparent font-semibold text-danger hover:bg-danger/10'
-            : 'border border-[color:var(--border-strong)] bg-surface-2 font-semibold text-white hover:bg-surface-3',
+        'inline-flex min-h-[48px] items-center justify-center gap-2 rounded-md px-5 text-[14px]',
+        'transition-[background-color,filter,transform] duration-200 ease-out active:translate-y-0',
+        VARIANTS[variant],
         className,
       )}
     >

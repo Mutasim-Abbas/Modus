@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { AlertTriangle, UserPlus } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Field } from '@/components/Field';
@@ -62,10 +62,12 @@ export function SignUpScreen(): JSX.Element {
 
   return (
     <AuthLayout>
-      <div className="mb-5">
-        <h1 className="text-xl font-extrabold leading-tight text-white">Create an account</h1>
-        <p className="mt-1.5 text-sm leading-relaxed text-gray">
-          Your log syncs to every device you sign in on.
+      <div className="mb-6 text-center lg:text-start">
+        <h1 className="text-[25px] font-extrabold leading-tight tracking-[-0.03em] text-white lg:text-[28px]">
+          Create your account
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[28ch] text-[13.5px] leading-relaxed text-fm-text-faint lg:mx-0 lg:max-w-none">
+          Your log syncs across your devices. Nothing is shared.
         </p>
       </div>
 
@@ -124,7 +126,7 @@ export function SignUpScreen(): JSX.Element {
 
         <Button
           type="submit"
-          className="w-full"
+          className="min-h-[56px] w-full rounded-md text-[14.5px]"
           disabled={submitting || retryAfterSeconds !== null}
           aria-busy={submitting}
         >
@@ -132,6 +134,16 @@ export function SignUpScreen(): JSX.Element {
           {submitting ? 'Creating account…' : 'Create account'}
         </Button>
       </form>
+
+      <div className="mt-6 flex items-center justify-center gap-2">
+        <span className="text-[12.5px] text-fm-text-faint">Already have an account?</span>
+        <Link
+          to="/auth/sign-in"
+          className="inline-flex min-h-[40px] items-center rounded-sm text-[12.5px] font-bold text-fm-accent transition-colors hover:text-fm-accent-hover"
+        >
+          Sign in
+        </Link>
+      </div>
     </AuthLayout>
   );
 }

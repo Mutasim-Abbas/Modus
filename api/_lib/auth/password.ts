@@ -182,6 +182,6 @@ let dummyHashPromise: Promise<string> | null = null;
  * code path, as a login against a real one — see api/auth/login.ts.
  */
 export function getDummyHash(): Promise<string> {
-  dummyHashPromise ??= hashSecret(`fitmacro-timing-safety-dummy-${randomBytes(24).toString('hex')}`);
+  dummyHashPromise ??= hashSecret(`modus-timing-safety-dummy-${randomBytes(24).toString('hex')}`);
   return dummyHashPromise;
 }

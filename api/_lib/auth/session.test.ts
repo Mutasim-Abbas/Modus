@@ -71,7 +71,7 @@ describe('readSessionCookie', () => {
   function requestWithCookie(cookie: string | null): Request {
     const headers = new Headers();
     if (cookie !== null) headers.set('cookie', cookie);
-    return new Request('https://fitmacro.test/api/auth/me', { headers });
+    return new Request('https://modus.test/api/auth/me', { headers });
   }
 
   it('reads the token back out of a Set-Cookie-shaped header', () => {

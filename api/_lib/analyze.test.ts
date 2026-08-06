@@ -14,7 +14,7 @@ import { PNG_BASE64 } from './fixtures.js';
  * Provider: Groq's OpenAI-compatible endpoint, called with plain `fetch`. Every test
  * injects a fake `fetch`, so the real network is never touched and no key exists.
  *
- * The `normalizeModelOutput` block below is unchanged from the Anthropic implementation
+ * The `normalizeModelOutput` block below is unchanged from the pre-Groq implementation
  * on purpose: it is provider-agnostic, it is the layer that makes an untrusted model
  * response safe, and a provider swap is exactly when you want that coverage untouched.
  */

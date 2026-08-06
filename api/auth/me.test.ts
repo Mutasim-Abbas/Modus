@@ -3,7 +3,7 @@ import { freshTestDb, TEST_PEPPER, type TestDb } from '../_lib/db/testDb.js';
 import { createHandler as createSignupHandler } from './signup.js';
 import { createHandler as createMeHandler } from './me.js';
 
-const ORIGIN = 'https://fitmacro.test';
+const ORIGIN = 'https://modus.test';
 
 function req(path: string, method: string, headers: Record<string, string> = {}, body?: unknown): Request {
   return new Request(`${ORIGIN}${path}`, {

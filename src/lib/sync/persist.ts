@@ -16,6 +16,8 @@ import type { PullCursor, RowCursor } from '@/lib/sync/types';
  * skip B's own earlier rows on the very first pull for that account.
  */
 
+// The `fitmacro.` prefix is the product's former name. Renaming the key would strand the
+// cursors of every account that has already synced, so it stays as-is — see `store.ts`.
 const STORAGE_KEY = 'fitmacro.sync.v1';
 const VERSION = 1;
 
@@ -152,7 +154,7 @@ function parseAccountSyncState(value: unknown): AccountSyncState {
 
 function safeStorage(): Storage | null {
   try {
-    const probe = '__fitmacro_sync_probe__';
+    const probe = '__modus_sync_probe__';
     window.localStorage.setItem(probe, '1');
     window.localStorage.removeItem(probe);
     return window.localStorage;

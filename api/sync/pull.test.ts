@@ -4,7 +4,7 @@ import { createHandler as createSignupHandler } from '../auth/signup.js';
 import { createHandler as createPushHandler } from './push.js';
 import { createHandler as createPullHandler } from './pull.js';
 
-const ORIGIN = 'https://fitmacro.test';
+const ORIGIN = 'https://modus.test';
 
 function postReq(path: string, body: unknown, cookie: string): Request {
   return new Request(`${ORIGIN}${path}`, {

@@ -12,7 +12,7 @@ import { GIF_BASE64, PNG_BASE64 } from './_lib/fixtures.js';
 const VALID_BODY = { imageBase64: PNG_BASE64, mediaType: 'image/png' };
 
 function post(body: unknown, headers: Record<string, string> = {}): Request {
-  return new Request('https://fitmacro.test/api/analyze-meal', {
+  return new Request('https://modus.test/api/analyze-meal', {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...headers },
     body: typeof body === 'string' ? body : JSON.stringify(body),
@@ -110,7 +110,7 @@ describe('request handling', () => {
     const { deps } = depsReturning({ items: [], note: '' });
 
     const response = await createHandler(deps)(
-      new Request('https://fitmacro.test/api/analyze-meal', { method: 'GET' }),
+      new Request('https://modus.test/api/analyze-meal', { method: 'GET' }),
     );
 
     expect(response.status).toBe(405);

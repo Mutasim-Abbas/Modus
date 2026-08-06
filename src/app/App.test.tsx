@@ -88,33 +88,39 @@ describe('routing — once onboarded', () => {
     expect(await screen.findByText(/today’s meals/i)).toBeInTheDocument();
   });
 
-  it('renders the five primary destinations in the phone tab bar, Progress included', () => {
+  it('renders the four destinations plus the raised log button in the dock', () => {
     renderAt('/');
     const nav = screen.getByRole('navigation', { name: /main/i });
-    for (const label of ['Today', 'Log', 'Scan', 'Progress', 'More']) {
+    for (const label of ['Today', 'Insights', 'Coach', 'You']) {
       expect(within(nav).getByRole('link', { name: label })).toBeInTheDocument();
     }
-    // Plan/History/Profile are not primary destinations — they live under More.
-    for (const label of ['Plan', 'History', 'Profile']) {
+    // Logging is the app's one action, so it gets the raised centre button rather than
+    // competing with the destinations as a fifth peer.
+    expect(within(nav).getByRole('link', { name: 'Log food' })).toBeInTheDocument();
+
+    // Scan, History and the old More hub are not destinations: scan is an input method
+    // inside Log/Coach, and History is reached from Coach's shortcuts. Both routes still
+    // exist and still resolve — they are simply not in the dock.
+    for (const label of ['More', 'History', 'Scan', 'Progress']) {
       expect(within(nav).queryByRole('link', { name: label })).not.toBeInTheDocument();
     }
   });
 
-  it('navigates to the log screen from the nav', async () => {
+  it('navigates to the log screen from the dock button', async () => {
     const user = userEvent.setup();
     renderAt('/');
     const nav = screen.getByRole('navigation', { name: /main/i });
 
-    await user.click(within(nav).getByRole('link', { name: 'Log' }));
+    await user.click(within(nav).getByRole('link', { name: 'Log food' }));
     expect(await screen.findByLabelText(/search foods/i)).toBeInTheDocument();
   });
 
-  it('navigates to Progress from the nav and shows honest, per-card empty states', async () => {
+  it('navigates to Insights from the dock and shows honest, per-card empty states', async () => {
     const user = userEvent.setup();
     renderAt('/');
     const nav = screen.getByRole('navigation', { name: /main/i });
 
-    await user.click(within(nav).getByRole('link', { name: 'Progress' }));
+    await user.click(within(nav).getByRole('link', { name: 'Insights' }));
     // No fake/demo curve for a brand-new user — each card says exactly what's missing
     // (docs/DESIGN.md §7.5 "every card independently handles empty"). A generous
     // timeout here: this waits on the lazily-loaded Progress chunk resolving, which can
@@ -124,23 +130,20 @@ describe('routing — once onboarded', () => {
     expect(screen.getByText(/no weeks logged yet/i)).toBeInTheDocument();
   });
 
-  it('reaches Plan, History and Profile through the More hub', async () => {
+  it('reaches Coach from the dock, and History from Coach’s shortcuts', async () => {
     const user = userEvent.setup();
     renderAt('/');
     const nav = screen.getByRole('navigation', { name: /main/i });
 
-    await user.click(within(nav).getByRole('link', { name: 'More' }));
-    expect(await screen.findByRole('link', { name: /^Plan\b/ })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /^History\b/ })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /profile & targets/i })).toBeInTheDocument();
+    await user.click(within(nav).getByRole('link', { name: 'Coach' }));
+    expect(await screen.findByText(/plan it or scan it/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /look back at earlier days/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /recompute my targets/i })).toBeInTheDocument();
   });
 
   it('lazily loads the plan screen without crashing', async () => {
-    const user = userEvent.setup();
-    renderAt('/more');
-
-    await user.click(await screen.findByRole('link', { name: /^Plan\b/ }));
-    expect(await screen.findByText(/a day built from the food database/i)).toBeInTheDocument();
+    renderAt('/plan');
+    expect(await screen.findByText(/a day built for you/i)).toBeInTheDocument();
   });
 
   it('offers a skip link to the main content', () => {
@@ -186,7 +189,8 @@ describe('dashboard — empty vs populated', () => {
     const heading = await screen.findByRole('heading', { level: 1 });
     expect(heading).toHaveTextContent(`${(targets?.kcal ?? 0) - 248} kcal left`);
 
-    // "248 of N kcal logged" appears as the subtitle and in the ring's screen-reader text.
+    // v4: the fraction lives in the ring now, stated in its screen-reader sentence
+    // ("Calories: 248 of N kcal") rather than in a separate subtitle under the headline.
     expect(screen.getAllByText(/248 of/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/chicken breast/i)).toBeInTheDocument();
     expect(screen.queryByText(/nothing logged yet/i)).not.toBeInTheDocument();
@@ -203,13 +207,22 @@ describe('routing — desktop shell (≥1024px)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('shows every destination directly in the sidebar — no More at this width', async () => {
+  it('shows the same four destinations in the dock as on a phone', async () => {
     renderAt('/');
     const nav = await screen.findByRole('navigation', { name: /main/i });
-    for (const label of ['Today', 'Log', 'Scan', 'Progress', 'Plan', 'History', 'Profile']) {
-      expect(within(nav).getByRole('link', { name: new RegExp(`^${label}`) })).toBeInTheDocument();
+    for (const label of ['Today', 'Insights', 'Coach', 'You', 'Log food']) {
+      expect(within(nav).getByRole('link', { name: label })).toBeInTheDocument();
     }
-    expect(within(nav).queryByRole('link', { name: /^More$/ })).not.toBeInTheDocument();
+    // Nocturne has one nav at every width — there is no sidebar to carry extra links.
+    for (const label of ['More', 'History', 'Scan', 'Plan', 'Profile']) {
+      expect(within(nav).queryByRole('link', { name: label })).not.toBeInTheDocument();
+    }
+  });
+
+  it('mounts exactly one nav landmark, whatever the width', async () => {
+    renderAt('/');
+    await screen.findByRole('navigation', { name: /main/i });
+    expect(screen.getAllByRole('navigation', { name: /main/i })).toHaveLength(1);
   });
 
   it('redirects /more to /profile, since the sidebar already shows everything', async () => {

@@ -12,6 +12,7 @@ import type { MergePreview } from '@/lib/sync/adoption';
 import { applyPushResultToAcked, foldRemoteAppliedIntoAcked } from '@/lib/sync/diff';
 import { loadAccountSyncState, saveAccountSyncState } from '@/lib/sync/persist';
 import type { PullResult } from '@/lib/sync/types';
+import { BRAND } from '@/lib/brand';
 
 type Option = 'merge-both' | 'keep-device' | 'keep-account';
 
@@ -109,7 +110,7 @@ export function MergeScreen(): JSX.Element | null {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `fitmacro-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `modus-backup-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(url);
     setBackupDownloaded(true);
@@ -355,7 +356,7 @@ export function MergeScreen(): JSX.Element | null {
               </div>
             ))}
             <p className="text-gray-soft">
-              FitMacro keeps the newer change. After merging you can edit any of these on the Log screen.
+              {BRAND.name} keeps the newer change. After merging you can edit any of these on the Log screen.
             </p>
           </div>
         ) : null}

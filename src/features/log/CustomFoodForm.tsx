@@ -5,6 +5,7 @@ import { Button } from '@/components/Button';
 import { Field } from '@/components/Field';
 import { listCategories } from '@/lib/search';
 import { useStore } from '@/lib/useStore';
+import { BRAND } from '@/lib/brand';
 
 const CATEGORIES = listCategories();
 
@@ -90,7 +91,7 @@ export function CustomFoodForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p className="text-xs leading-relaxed text-gray-soft">
-        These are your own numbers — FitMacro hasn&apos;t checked them. They&apos;ll always show
+        These are your own numbers — {BRAND.name} hasn&apos;t checked them. They&apos;ll always show
         a &ldquo;Custom&rdquo; badge so they&apos;re never mistaken for a verified reference value.
       </p>
 

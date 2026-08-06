@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Card } from '@/components/Card';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { StatTile } from '@/components/StatTile';
 import { Segmented } from '@/components/Segmented';
 import { Button } from '@/components/Button';
 import { WeightTrendChart } from '@/components/charts/WeightTrendChart';
@@ -103,14 +104,10 @@ export function ProgressScreen(): JSX.Element {
     <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
       <div className="lg:col-span-12">
         <ScreenHeader
-          eyebrow="Progress"
-          title="Weight and macro trends"
-          subtitle="Real numbers from your own log — nothing here is a demo."
-          action={
-            <div className="lg:hidden">
-              <SyncChip />
-            </div>
-          }
+          eyebrow="Insights"
+          title="How it’s going"
+          subtitle="Weight, where your calories come from, and how consistent you’ve been — drawn only from days you actually logged."
+          action={<SyncChip />}
         />
 
         <Segmented legend="Date range" options={RANGE_OPTIONS} value={range} onChange={setRange} columns={4} />
@@ -130,13 +127,28 @@ export function ProgressScreen(): JSX.Element {
         )}
       </Card>
 
-      <div className="grid grid-cols-2 gap-3 lg:col-span-4 lg:grid-cols-1">
-        <StatTile label="Current weight" value={latestWeightKg !== null && latestWeightKg !== undefined ? `${latestWeightKg} kg` : '—'} />
+      <div className="grid grid-cols-2 gap-3.5 lg:col-span-4">
+        {/* "Current weight", not the mock's bare "Current": this tile sits in a 2×2 block
+            away from the chart's own title, so it has to name its own subject. */}
+        <StatTile
+          label="Current weight"
+          value={
+            latestWeightKg !== null && latestWeightKg !== undefined ? `${latestWeightKg} kg` : '—'
+          }
+        />
         <StatTile
           label={`Change (${currentRangeLabel})`}
           value={weightDelta !== null ? `${weightDelta > 0 ? '+' : ''}${weightDelta} kg` : '—'}
+          /* Losing weight is not universally "good", so the delta is never coloured by
+             sign — it takes the goal's own direction or stays neutral. */
+          tone={weightDelta === null || weightDelta === 0 ? 'neutral' : 'accent'}
         />
-        <StatTile label="Current streak" value={`${streakCount} day${streakCount === 1 ? '' : 's'}`} />
+        <StatTile
+          label="Streak"
+          value={`${streakCount} d`}
+          hint="within ±15% of target"
+          tone="warn"
+        />
         <StatTile label="Days logged" value={String(totalLoggedDays)} />
       </div>
 
@@ -172,16 +184,3 @@ export function ProgressScreen(): JSX.Element {
   );
 }
 
-interface StatTileProps {
-  label: string;
-  value: string;
-}
-
-function StatTile({ label, value }: StatTileProps): JSX.Element {
-  return (
-    <div className="flex flex-col gap-1 rounded-md bg-fm-bg-elevated px-3 py-3 lg:rounded-lg lg:border lg:border-[color:var(--fm-border)] lg:bg-transparent lg:px-4 lg:py-3.5">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-fm-text-subtle">{label}</span>
-      <span className="text-lg font-extrabold tabular-nums text-fm-text">{value}</span>
-    </div>
-  );
-}

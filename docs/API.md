@@ -1,4 +1,4 @@
-# FitMacro API
+# Modus API
 
 Three surfaces today: the AI meal-scan endpoint (v2, unchanged), the auth endpoints
 (`api/auth/*`, `P2.2`), and the sync endpoints (`api/sync/*`, `P2.3` — delta pull/push of
@@ -7,10 +7,10 @@ implemented and tested today, or explicitly marked otherwise.
 
 > **`analyze-meal` status: implemented.** `api/analyze-meal.ts` (+ `api/_lib/`) serves
 > that contract, and both sides are tested — the client in `src/lib/api.ts`, the function
-> in `api/analyze-meal.test.ts` and `api/_lib/*.test.ts`. Tests mock the Anthropic SDK:
+> in `api/analyze-meal.test.ts` and `api/_lib/*.test.ts`. Tests mock the provider at the `fetch` boundary:
 > they never make a real API call and never need a key.
 >
-> **The AI scan is off until an `ANTHROPIC_API_KEY` is set in the deployment.** That is a
+> **The AI scan is off until a `GROQ_API_KEY` is set in the deployment.** That is a
 > supported state, not a broken one: the function returns `503 ai_unconfigured`, scanning
 > disables itself with an honest message, and everything else (food database, logging,
 > planner, history) keeps working offline.
@@ -36,6 +36,12 @@ implemented and tested today, or explicitly marked otherwise.
 ## `POST /api/analyze-meal`
 
 Estimates the macros in a photo of a meal.
+
+> **The provider changed once, and the contract did not.** This endpoint ran on Anthropic
+> until 2026-08-03 and has run on **Groq** since, because this project only uses genuinely
+> free tiers. Nothing in the request/response shape below moved — the client never knew
+> which provider was behind it, which is why the swap was a one-file change in
+> `api/_lib/analyze.ts`. Older commits and screenshots may still show the Anthropic setup.
 
 ### Request
 
@@ -101,7 +107,7 @@ Client behaviour on 200:
 
 ### The 503 contract — important
 
-When `ANTHROPIC_API_KEY` is unset, the function **must** return:
+When `GROQ_API_KEY` is unset, the function **must** return:
 
 ```json
 { "error": "ai_unconfigured" }
@@ -124,18 +130,27 @@ A `404` is treated identically, so the app behaves correctly before the function
 
 ## Server implementation notes
 
-These are requirements from the project brief, restated here for whoever builds the
-function. The frontend does not depend on them beyond the contract above.
+As built, in `api/_lib/analyze.ts`. The frontend does not depend on any of it beyond the
+contract above — that separation is what made the provider swap a one-file change.
 
-- Use the official **`@anthropic-ai/sdk`**. Never raw `fetch`, never an OpenAI shim.
-- Model **`claude-opus-4-8`** exactly. `max_tokens: 16000`.
-- `thinking: { type: "adaptive" }`. Do **not** send `budget_tokens` — it 400s on Opus 4.8.
-- Do **not** send `temperature` / `top_p` / `top_k` — they 400 on Opus 4.8.
-- Structured output via `output_config: { format: { type: "json_schema", schema } }`
-  (or `client.messages.parse()` with `zodOutputFormat`). Not the deprecated `output_format`.
-- Vision: the base64 image content block goes **before** the text block.
-- Key from `process.env.ANTHROPIC_API_KEY`. Never logged, never returned, never bundled.
-- Guardrails: ~5 MB cap, per-IP rate limit, reject non-image media types.
+- **Plain `fetch`** against `https://api.groq.com/openai/v1/chat/completions`. No AI SDK is
+  installed; `@anthropic-ai/sdk` was removed when the scan moved to Groq.
+- Model **`qwen/qwen3.6-27b`**. Groq's catalogue moves, so re-check it against their docs
+  rather than assuming this string is still current.
+- `max_tokens: 2000`. Groq's free tier counts **prompt + `max_tokens` together**, so a
+  larger budget fails the whole request with a 413 rather than truncating. A test asserts
+  it stays under 5000.
+- **`reasoning_effort: 'none'`.** This is load-bearing, not tuning. The model reasons by
+  default and the trace is billed against `max_tokens` — measured at 3,743 trace tokens
+  against a 2,000 budget, which left `response_format: json_object` validating unfinished
+  JSON and returning `400 json_validate_failed` → mapped to 502. Every real scan failed
+  this way until the trace was turned off.
+- Output requested as `json_object`, **not** a provider-specific `json_schema` mode.
+  `normalizeModelOutput` validates and clamps everything regardless, so the next provider
+  swap cannot silently break the contract either.
+- Key from `process.env.GROQ_API_KEY`. Never logged, never returned, never bundled.
+- Guardrails: ~5 MB cap, per-IP rate limit, reject non-image media types. Note Vercel's own
+  **4.5 MB request body** limit binds first — a >3.4 MB photo exceeds it once base64'd.
 
 ### Guardrails as built
 
@@ -155,8 +170,9 @@ and recycles them freely, so the real ceiling is roughly
 courtesy brake against one client hammering the scan button — **not** a durable defence
 against a determined attacker. Durable limiting needs shared state (Vercel KV / Upstash).
 This is documented rather than papered over.
-- Catch typed SDK errors (`Anthropic.RateLimitError`, `Anthropic.APIError`) — no string
-  matching on error messages.
+- Map failures by HTTP **status**, not by string-matching error messages —
+  `failureForStatus` in `api/_lib/analyze.ts`. Note Groq returns **413** (not 429) with
+  `code: rate_limit_exceeded` for a token-budget overrun, so 413 maps to `rate_limited` too.
 - Prompt the model to estimate honestly, return a per-item `confidence`, and say in
   `note` when it cannot tell. The UI presents all of it as an estimate.
 
@@ -249,7 +265,7 @@ attempt expires — a conservative, honestly-approximate upper bound, not a prec
 > The heading here used to read "No user enumeration", which claimed more than the
 > implementation delivers (the internal security audit **F-12**). The behaviour below is unchanged
 > and is the right behaviour; only the claim is corrected. For a nutrition and body-weight
-> app, "does this person have a FitMacro account" is itself personal information, so the
+> app, "does this person have a Modus account" is itself personal information, so the
 > honest statement matters: **login and recovery leak nothing; signup discloses existence,
 > on purpose.**
 
@@ -895,7 +911,7 @@ one) — narrower than "all or nothing," honestly described instead of glossed o
   alternative (field-level merge, or CRDTs) is real engineering cost this project does
   not need for the shape of data involved. The place this surfaces to a real person is
   `docs/DESIGN.md` §7.11's merge screen, whose "Review" panel says exactly this in
-  plain language ("FitMacro keeps the newer change") rather than hiding it — this is
+  plain language ("Modus keeps the newer change") rather than hiding it — this is
   the client-facing honesty this section's contract is written to make possible, not a
   gap the design papered over.
 - **No dedicated rate limit on `api/sync/*`.** Unlike `api/auth/*` (Postgres-backed,

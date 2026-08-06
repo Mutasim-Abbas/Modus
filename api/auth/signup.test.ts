@@ -4,7 +4,7 @@ import { sessions, users } from '../_lib/db/schema.js';
 import { freshTestDb, TEST_PEPPER, type TestDb } from '../_lib/db/testDb.js';
 import { createHandler } from './signup.js';
 
-const ORIGIN = 'https://fitmacro.test';
+const ORIGIN = 'https://modus.test';
 
 function signupRequest(
   body: unknown,

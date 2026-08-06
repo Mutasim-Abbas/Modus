@@ -6,7 +6,7 @@ import { createHandler as createLoginHandler } from './login.js';
 import { createHandler as createLogoutAllHandler } from './logout-all.js';
 import { createHandler as createMeHandler } from './me.js';
 
-const ORIGIN = 'https://fitmacro.test';
+const ORIGIN = 'https://modus.test';
 
 function req(path: string, method: string, headers: Record<string, string> = {}, body?: unknown): Request {
   return new Request(`${ORIGIN}${path}`, {

@@ -7,6 +7,7 @@ import { Segmented } from '@/components/Segmented';
 import { macrosForGrams } from '@/lib/macros';
 import { cn } from '@/lib/cn';
 import { MEAL_LABELS, MEAL_OPTIONS } from '@/features/log/meals';
+import { BRAND } from '@/lib/brand';
 
 interface PortionPanelProps {
   food: Food;
@@ -130,7 +131,7 @@ export function PortionPanel({
         </dl>
         <p className="mt-3 text-[11px] leading-relaxed text-gray-soft">
           {isCustom
-            ? 'Based on the numbers you entered — FitMacro hasn’t checked them.'
+            ? `Based on the numbers you entered — ${BRAND.name} hasn’t checked them.`
             : `Based on ${food.kcal} kcal per 100 g — an approximate reference value.`}
         </p>
       </div>

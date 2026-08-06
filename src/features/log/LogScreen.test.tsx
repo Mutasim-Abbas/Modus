@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { LogScreen } from '@/features/log/LogScreen';
@@ -213,8 +213,12 @@ describe('logging survives a refresh — the thing v1 got wrong', () => {
       </MemoryRouter>,
     );
 
-    const main = screen.getAllByText(/of \d+ kcal logged/i)[0];
-    expect(main).toBeInTheDocument();
-    expect(within(main as HTMLElement).getByText(/165 of/i)).toBeTruthy();
+    /*
+      v4 removed the "165 of 2711 kcal logged" subtitle from the Today header — the ring
+      carries the fraction now. Asserting on the ring's accessible sentence rather than on
+      the visible fraction is deliberate: that string is what a screen reader actually
+      announces, so it is the canonical statement of the total and the one worth pinning.
+    */
+    expect(await screen.findByText(/calories:\s*165 of \d+ kcal/i)).toBeInTheDocument();
   });
 });

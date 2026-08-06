@@ -1,5 +1,5 @@
 /**
- * Generates the PWA icons and the OG image from the FitMacro design tokens.
+ * Generates the PWA icons and the OG image from the Modus design tokens.
  *
  * Written as a dependency-free PNG encoder (zlib is in Node core) so the repo does not
  * carry binary blobs whose provenance nobody can check, and so the icons regenerate
@@ -203,10 +203,10 @@ function makeIcon(size) {
   const box = size - pad * 2;
   canvas.roundedRect(pad, pad, box, box, Math.round(box * 0.22), GOLD_LIGHT, GOLD_DIM);
 
-  // "FM" centred on the gold tile.
+  // "M" centred on the gold tile.
   const scale = Math.max(1, Math.round(size / 18));
-  const width = (5 + 1 + 5) * scale;
-  canvas.text('FM', Math.round((size - width) / 2), Math.round((size - 7 * scale) / 2), scale, INK);
+  const width = 5 * scale;
+  canvas.text('M', Math.round((size - width) / 2), Math.round((size - 7 * scale) / 2), scale, INK);
 
   return canvas.toPNG();
 }
@@ -227,9 +227,9 @@ function makeOgImage() {
 
   const tile = 132;
   canvas.roundedRect(96, 96, tile, tile, 30, GOLD_LIGHT, GOLD_DIM);
-  canvas.text('FM', 96 + 26, 96 + 38, 8, INK);
+  canvas.text('M', 96 + 46, 96 + 38, 8, INK);
 
-  canvas.text('FITMACRO', 96, 300, 12, [0xf7, 0xf5, 0xf0]);
+  canvas.text('MODUS', 96, 300, 12, [0xf7, 0xf5, 0xf0]);
   canvas.text('MACRO TRACKER', 96, 420, 5, GOLD);
 
   return canvas.toPNG();

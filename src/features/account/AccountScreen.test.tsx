@@ -50,10 +50,10 @@ describe('AccountScreen — every guest/auth state', () => {
   it('shows the signed-in email once authenticated', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(jsonResponse(200, { user: { id: 'u1', email: 'me@fitmacro.test', emailVerified: false, createdAt: '' } })),
+      vi.fn().mockResolvedValue(jsonResponse(200, { user: { id: 'u1', email: 'me@modus.test', emailVerified: false, createdAt: '' } })),
     );
     renderAccount();
-    expect(await screen.findByText('me@fitmacro.test')).toBeInTheDocument();
+    expect(await screen.findByText('me@modus.test')).toBeInTheDocument();
   });
 });
 
@@ -64,13 +64,13 @@ describe('AccountScreen — sign out actions', () => {
       vi
         .fn()
         .mockResolvedValueOnce(
-          jsonResponse(200, { user: { id: 'u1', email: 'me@fitmacro.test', emailVerified: false, createdAt: '' } }),
+          jsonResponse(200, { user: { id: 'u1', email: 'me@modus.test', emailVerified: false, createdAt: '' } }),
         )
         .mockResolvedValueOnce(jsonResponse(200, { ok: true })),
     );
     const user = userEvent.setup();
     renderAccount();
-    await screen.findByText('me@fitmacro.test');
+    await screen.findByText('me@modus.test');
 
     await user.click(screen.getByRole('button', { name: /^sign out$/i }));
 
@@ -83,13 +83,13 @@ describe('AccountScreen — sign out actions', () => {
       vi
         .fn()
         .mockResolvedValueOnce(
-          jsonResponse(200, { user: { id: 'u1', email: 'me@fitmacro.test', emailVerified: false, createdAt: '' } }),
+          jsonResponse(200, { user: { id: 'u1', email: 'me@modus.test', emailVerified: false, createdAt: '' } }),
         )
         .mockResolvedValueOnce(jsonResponse(200, { ok: true })),
     );
     const user = userEvent.setup();
     renderAccount();
-    await screen.findByText('me@fitmacro.test');
+    await screen.findByText('me@modus.test');
 
     await user.click(screen.getByRole('button', { name: /sign out everywhere/i }));
 

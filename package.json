@@ -1,9 +1,9 @@
 {
-  "name": "fitmacro",
+  "name": "modus",
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "description": "FitMacro — nutrition tracker: real macro engine, real food database, local-first persistence.",
+  "description": "Modus — nutrition tracker: real macro engine, real food database, local-first persistence.",
   "engines": {
     "node": ">=20"
   },

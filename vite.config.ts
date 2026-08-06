@@ -12,12 +12,12 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'FitMacro — Nutrition Tracker',
-        short_name: 'FitMacro',
+        name: 'Modus — Nutrition Tracker',
+        short_name: 'Modus',
         description:
           'Track calories and macros with a real macro engine and a curated food database. Works fully offline; create a free account if you want your log to sync across devices.',
-        theme_color: '#0b0b0a',
-        background_color: '#0b0b0a',
+        theme_color: '#12131c',
+        background_color: '#12131c',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

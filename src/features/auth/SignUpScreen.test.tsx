@@ -59,7 +59,7 @@ describe('SignUpScreen', () => {
     const user = userEvent.setup();
     renderSignUp();
 
-    await user.type(await screen.findByLabelText(/^email$/i), 'new@fitmacro.test');
+    await user.type(await screen.findByLabelText(/^email$/i), 'new@modus.test');
     await user.type(screen.getByLabelText(/^password$/i), 'a-strong-password-1');
 
     vi.mocked(fetch).mockResolvedValueOnce({
@@ -68,7 +68,7 @@ describe('SignUpScreen', () => {
       headers: new Headers(),
       json: () =>
         Promise.resolve({
-          user: { id: 'u1', email: 'new@fitmacro.test', emailVerified: false, createdAt: '' },
+          user: { id: 'u1', email: 'new@modus.test', emailVerified: false, createdAt: '' },
           recoveryCode: '7K4M-92QX-8RTD-51WV-3NHA',
         }),
     } as Response);
@@ -86,7 +86,7 @@ describe('SignUpScreen', () => {
     const user = userEvent.setup();
     renderSignUp();
 
-    await user.type(await screen.findByLabelText(/^email$/i), 'taken@fitmacro.test');
+    await user.type(await screen.findByLabelText(/^email$/i), 'taken@modus.test');
     await user.type(screen.getByLabelText(/^password$/i), 'a-strong-password-1');
 
     vi.mocked(fetch).mockResolvedValueOnce({

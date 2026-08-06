@@ -65,6 +65,17 @@ export function lastNDays(n: number, today: DayKey = toDayKey()): DayKey[] {
   return dayKeysBetween(addDays(today, -(Math.trunc(n) - 1)), today);
 }
 
+/**
+ * The long, spelled-out form used in the Today eyebrow — "Wednesday, 5 August". Unlike
+ * `formatDayLabel` this never collapses to "Today"/"Yesterday": the eyebrow already says
+ * "Today ·", so the date next to it has to be the actual date to add anything.
+ */
+export function formatLongDate(key: DayKey): string {
+  const date = fromDayKey(key);
+  if (!date) return key;
+  return date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
 export function formatDayLabel(key: DayKey, today: DayKey = toDayKey()): string {
   const date = fromDayKey(key);
   if (!date) return key;

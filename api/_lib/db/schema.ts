@@ -1,5 +1,5 @@
 /**
- * FitMacro v3 — Drizzle schema (single source of truth for the Postgres shape).
+ * Modus v3 — Drizzle schema (single source of truth for the Postgres shape).
  *
  * The full reasoning for every table, column, index, constraint and cascade lives in
  * `docs/DB.md` — this file is deliberately light on prose so the two don't drift out of

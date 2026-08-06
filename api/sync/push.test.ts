@@ -5,7 +5,7 @@ import { freshTestDb, TEST_PEPPER, type TestDb } from '../_lib/db/testDb.js';
 import { createHandler as createSignupHandler } from '../auth/signup.js';
 import { createHandler as createPushHandler } from './push.js';
 
-const ORIGIN = 'https://fitmacro.test';
+const ORIGIN = 'https://modus.test';
 
 function req(path: string, body: unknown, cookie: string | null, headers: Record<string, string> = {}): Request {
   const h: Record<string, string> = { 'content-type': 'application/json', origin: ORIGIN, ...headers };

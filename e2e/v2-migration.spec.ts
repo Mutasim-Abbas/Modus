@@ -50,7 +50,10 @@ test.describe('a v2 user opens v3', () => {
 
     // Straight to the dashboard — a migrated profile means onboarding must NOT reappear.
     expect(new URL(page.url()).pathname).toBe('/');
-    await expect(page.getByText(/of 1481 kcal logged/)).toBeVisible();
+    // The migrated profile recomputes to a 1481 kcal target, shown as the ring's
+    // eaten/target fraction under the counted-down headline.
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/kcal (left|over)$/);
+    await expect(page.getByText(/\d+ \/ 1481/)).toBeVisible();
 
     // Every one of the four entries is still on its original day, with its numbers.
     await page.goto('/log');

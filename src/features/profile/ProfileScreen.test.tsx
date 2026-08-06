@@ -43,8 +43,15 @@ describe('ProfileScreen — targets', () => {
 
   it('explains every step of the calculation, citing Mifflin-St Jeor', () => {
     renderProfile();
-    expect(screen.getByText(/mifflin-st jeor/i)).toBeInTheDocument();
+    // Named twice on this screen: once in the panel's summary of the whole chain, and
+    // again as the BMR row's own note. Both are wanted, so assert presence, not count.
+    expect(screen.getAllByText(/mifflin-st jeor/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/not medical advice/i)).toBeInTheDocument();
+
+    // Each step of the chain is a row with its own figure.
+    for (const step of [/^BMR$/, /^TDEE$/, /^Daily target$/, /^Macro split$/]) {
+      expect(screen.getByText(step)).toBeInTheDocument();
+    }
   });
 
   it('recalculates the preview live when the goal changes, before saving', async () => {

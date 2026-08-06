@@ -1,73 +1,94 @@
 /**
- * Design tokens — Direction A, "Bullion" (docs/DESIGN.md §2.1–2.2).
+ * Design tokens — Direction "Nocturne" (the `Modus Desktop` / `Modus Phone` designs).
  *
  * This file is the single source of colour. Two layers:
- *   1. Primitive tokens (--fm-*) — the raw palette, contrast-verified in DESIGN.md §2.3.
+ *   1. Primitive tokens — the raw palette.
  *   2. Semantic tokens (--fm-*) — what components are allowed to consume by name.
  *
  * A component that writes a raw hex, or reaches past the semantic layer into a primitive
  * it wasn't given a semantic name for, is a bug.
+ *
+ * The previous direction ("Bullion", warm black + gold) is gone. Its primitive names
+ * (--fm-gold-*) and the v2 aliases (--gold, --gold-light, --gold-dim) survive at the
+ * bottom of this file as pass-throughs onto the violet ramp, so ~50 existing
+ * `text-gold` / `bg-gold` call sites re-skin without being touched. Those names now lie
+ * about their colour and are deprecated — see the note above that block.
  */
 
 :root {
   color-scheme: dark;
 
-  /* ── Neutral ground (warm) ─────────────────────────────────────────────── */
-  --fm-black: #0b0b0a; /* page */
-  --fm-black-raise: #121110; /* sticky bars, table header */
-  --fm-surface-1: #1a1916; /* cards, charts */
-  --fm-surface-2: #221f1b; /* inputs, list rows, chart tooltip */
-  --fm-surface-3: #2b2721; /* chips, progress tracks, gridlines */
-  --fm-surface-4: #35302a; /* hover on surface-3, pressed rows */
-  --fm-scrim: rgba(6, 6, 5, 0.72); /* behind sheets/dialogs */
+  /* ── Neutral ground (cool) ─────────────────────────────────────────────── */
+  --fm-black: #12131c; /* page */
+  --fm-black-raise: #161822; /* sticky bars, table header */
+  --fm-surface-0: #1a1c28; /* cards */
+  --fm-surface-1: #1f2130; /* raised panels, charts */
+  --fm-surface-2: #252838; /* inputs, list rows, chart tooltip */
+  --fm-surface-3: #2e3143; /* chips, progress tracks, gridlines */
+  --fm-surface-4: #383c52; /* hover on surface-3, pressed rows */
+  --fm-scrim: rgba(8, 9, 14, 0.72); /* behind sheets/dialogs */
 
   /* ── Ink ──────────────────────────────────────────────────────────────── */
-  --fm-ink-1: #f7f5f0;
-  --fm-ink-2: #dad4c8;
-  --fm-ink-3: #a8a296;
-  --fm-ink-4: #8b8579;
-  --fm-ink-disabled: #6b665d; /* disabled text only — WCAG exempt */
+  --fm-ink-1: #e4e7f2;
+  --fm-ink-2: #cdd2e6;
+  --fm-ink-3: #9aa0bb;
+  /**
+   * The mocks run their smallest meta text at #6d7391, which is 3.66:1 on a card — under
+   * AA for body copy. The faint step is held at #868ca8 (5.15:1 on a card, 5.58:1 on the
+   * page) and #6d7391 is demoted to disabled-only, where WCAG does not apply. Visually
+   * this is half a step lighter than the mock on 10–11px meta lines; nothing else moves.
+   */
+  --fm-ink-4: #868ca8;
+  --fm-ink-disabled: #6d7391; /* disabled text only — WCAG exempt */
 
-  /* ── Gold (identity) ─────────────────────────────────────────────────── */
-  --fm-gold-100: #f9e7b3;
-  --fm-gold-200: #f0d878; /* focus ring, hover ink */
-  --fm-gold-300: #e9c85e;
-  --fm-gold-400: #d4af37; /* THE gold */
-  --fm-gold-500: #b59521;
-  --fm-gold-600: #8a7224; /* 3:1 borders */
-  --fm-gold-700: #5d4b0c;
-  --fm-gold-800: #392c01;
-  --fm-gold-900: #241c05; /* tinted fills behind gold text */
+  /* ── Violet (identity) ────────────────────────────────────────────────── */
+  --fm-violet-100: #ede9fe;
+  --fm-violet-200: #c4b5fd; /* focus ring, bright ink — 9.3:1 on a card */
+  --fm-violet-300: #a78bfa; /* THE accent, as ink — 6.3:1 on a card */
+  --fm-violet-400: #8b5cf6; /* fills, chart series, borders — 4.0:1, never small text */
+  --fm-violet-500: #7c3aed;
+  --fm-violet-600: #6d28d9; /* gradient end */
+  --fm-violet-700: #5b21b6;
+  --fm-violet-800: #3c1a78;
+  --fm-violet-900: #221a3d; /* tinted fill behind accent text */
+
+  /* ── Cyan (secondary — scan, protein, informational) ───────────────────── */
+  --fm-cyan-200: #a5f3fc;
+  --fm-cyan-300: #67e8f9;
+  --fm-cyan-400: #22d3ee;
+  --fm-cyan-500: #06b6d4;
+  --fm-cyan-600: #0891b2;
+  --fm-cyan-900: #10303a;
 
   /* ── Status (reserved — never used as a chart series) ──────────────────── */
-  --fm-ok: #55c483;
-  --fm-warn: #f4993c;
-  --fm-danger: #f05560;
-  --fm-danger-hover: #f4726f;
-  --fm-danger-active: #d9414c;
-  --fm-info: #70b6e7;
-  --fm-neutral: #a8a296;
+  --fm-ok: #34d399;
+  --fm-warn: #fbbf24;
+  --fm-danger: #fb7185;
+  --fm-danger-hover: #fda4af;
+  --fm-danger-active: #f43f5e;
+  --fm-info: #22d3ee;
+  --fm-neutral: #9aa0bb;
 
-  /* status tint fills — status colour at 10% over surface-1, pre-composited. */
-  --fm-ok-bg: #202a21;
-  --fm-warn-bg: #30261a;
-  --fm-danger-bg: #2f1f1d;
-  --fm-info-bg: #23292b;
+  /* status tint fills — status colour at 12% over surface-0, pre-composited. */
+  --fm-ok-bg: #1d3236;
+  --fm-warn-bg: #353028;
+  --fm-danger-bg: #352633;
+  --fm-info-bg: #1b3240;
 
-  /* ── Data (validated — see DESIGN.md §4) ────────────────────────────────── */
-  --fm-data-protein: #dd6d49;
-  --fm-data-carbs: #00a692;
-  --fm-data-fat: #a769d0;
-  --fm-data-energy: #d4af37;
-  --fm-data-grid: #2b2721;
-  --fm-data-axis: #3a352d;
-  --fm-data-ref: #a8a296;
+  /* ── Data (macro series) ───────────────────────────────────────────────── */
+  --fm-data-protein: #22d3ee;
+  --fm-data-carbs: #8b5cf6;
+  --fm-data-fat: #fbbf24;
+  --fm-data-energy: #a78bfa;
+  --fm-data-grid: #2e3143;
+  --fm-data-axis: #383c52;
+  --fm-data-ref: #9aa0bb;
 
   /* ── Borders ──────────────────────────────────────────────────────────── */
-  --fm-border: rgba(212, 175, 55, 0.16);
-  --fm-border-strong: rgba(212, 175, 55, 0.34);
-  --fm-border-field: #8a7224; /* 3.53:1 on surface-2 — inputs */
-  --fm-border-neutral: rgba(247, 245, 240, 0.09);
+  --fm-border: rgba(255, 255, 255, 0.07);
+  --fm-border-strong: rgba(167, 139, 250, 0.32);
+  --fm-border-field: #6f7699; /* 3.33:1 on surface-2 — inputs */
+  --fm-border-neutral: rgba(228, 231, 242, 0.09);
 
   /* ── Semantic tokens — components consume only these ───────────────────── */
   --fm-bg: var(--fm-black);
@@ -78,46 +99,79 @@
   --fm-text-subtle: var(--fm-ink-3);
   --fm-text-faint: var(--fm-ink-4);
   --fm-text-disabled: var(--fm-ink-disabled);
-  --fm-text-on-accent: var(--fm-black); /* ink sitting ON a gold fill */
+  --fm-text-on-accent: var(--fm-black); /* ink sitting ON an --fm-accent fill */
 
-  --fm-accent: var(--fm-gold-400);
-  --fm-accent-hover: var(--fm-gold-300);
-  --fm-accent-press: var(--fm-gold-500);
-  --fm-accent-quiet: var(--fm-gold-900); /* tinted fill behind gold text */
+  /**
+   * --fm-accent is the *ink* step (#a78bfa), not the mock's #8b5cf6. #8b5cf6 is 4.0:1 on a
+   * card, so using it as text — which ~50 call sites do — would fail AA everywhere. The
+   * saturated step lives on as --fm-accent-fill for the things that are genuinely fills:
+   * the ring gradient, chart series, the primary button, chip backgrounds.
+   */
+  --fm-accent: var(--fm-violet-300);
+  --fm-accent-hover: var(--fm-violet-200);
+  --fm-accent-press: var(--fm-violet-400);
+  --fm-accent-quiet: var(--fm-violet-900); /* tinted fill behind accent text */
+  --fm-accent-fill: var(--fm-violet-400);
+  --fm-accent-fill-strong: var(--fm-violet-600);
 
-  --fm-focus: var(--fm-gold-200);
+  --fm-accent-2: var(--fm-cyan-400); /* scan / secondary action */
+  --fm-accent-2-ink: var(--fm-cyan-300);
+  --fm-accent-2-quiet: var(--fm-cyan-900);
 
-  --fm-card: var(--fm-surface-1);
+  --fm-focus: var(--fm-violet-200);
+
+  --fm-card: var(--fm-surface-0);
   --fm-field: var(--fm-surface-2);
   --fm-chip: var(--fm-surface-3);
   --fm-hover: var(--fm-surface-4);
 
+  /* ── Signature gradients ──────────────────────────────────────────────── */
+  --fm-grad-accent: linear-gradient(135deg, var(--fm-violet-400), var(--fm-violet-600));
+  --fm-grad-accent-soft: linear-gradient(140deg, var(--fm-violet-300), var(--fm-violet-600));
+  --fm-grad-cyan: linear-gradient(135deg, var(--fm-cyan-400), var(--fm-cyan-600));
+  /* The calorie ring: violet-200 → violet-400 → cyan-400, per both mocks. */
+  --fm-grad-ring-from: var(--fm-violet-200);
+  --fm-grad-ring-mid: var(--fm-violet-400);
+  --fm-grad-ring-to: var(--fm-cyan-400);
+
   /* ── Type: line-height tokens, Latin defaults (see [lang='ar'] overrides) ── */
-  --fm-lh-body: 1.55;
-  --fm-lh-heading: 1.2;
-  --fm-lh-tight: 1.05;
+  --fm-lh-body: 1.6;
+  --fm-lh-heading: 1.1;
+  --fm-lh-tight: 1.04;
 
   /* Arabic (Cairo) loads lazily on language switch — P3.5. Until then this stays Latin. */
-  --fm-font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Arial,
-    sans-serif;
-  --fm-font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  --fm-font-sans: 'Sora', 'Manrope', 'Inter Variable', system-ui, -apple-system, 'Segoe UI',
+    Arial, sans-serif;
+  --fm-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* ── Radii ───────────────────────────────────────────────────────────── */
-  --fm-r-xs: 6px;
-  --fm-r-sm: 10px;
-  --fm-r-md: 14px;
-  --fm-r-lg: 22px;
-  --fm-r-xl: 28px;
+  /**
+   * Numerals. Both mocks set every quantity — calorie counts, gram weights, macro
+   * readouts, axis labels — in JetBrains Mono, which is what makes a number read as a
+   * measurement rather than as body copy. Applied via `.num` / `font-num`, never to
+   * running text: `[lang='ar']` points it back at the sans stack below, because the
+   * face has no Arabic-Indic coverage.
+   */
+  --fm-font-num: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ── Radii — Nocturne is markedly rounder than Bullion ──────────────────── */
+  --fm-r-xs: 8px;
+  --fm-r-sm: 12px;
+  --fm-r-md: 16px; /* buttons, chips-with-corners */
+  --fm-r-lg: 22px; /* list rows, small cards */
+  --fm-r-xl: 28px; /* cards */
+  --fm-r-2xl: 32px; /* sheets, hero panels */
   --fm-r-full: 999px;
 
   /* ── Elevation ───────────────────────────────────────────────────────── */
   --fm-elev-0: none;
-  --fm-elev-1: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --fm-elev-1: 0 1px 2px rgba(0, 0, 0, 0.5);
   --fm-elev-2:
-    0 4px 16px -4px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
+    0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
   --fm-elev-3:
-    0 12px 32px -8px rgba(0, 0, 0, 0.65), 0 2px 6px rgba(0, 0, 0, 0.45);
-  --fm-elev-accent: 0 8px 28px -10px rgba(212, 175, 55, 0.28);
+    0 24px 56px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.45);
+  --fm-elev-4: 0 30px 80px rgba(0, 0, 0, 0.6);
+  --fm-elev-accent: 0 12px 30px -8px rgba(124, 58, 237, 0.45);
+  --fm-elev-cyan: 0 12px 30px -8px rgba(34, 211, 238, 0.32);
 
   /* ── Motion ──────────────────────────────────────────────────────────── */
   --fm-ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1);
@@ -131,19 +185,31 @@
   --fm-dur-5: 520ms;
 
   /* ── Spacing (referenced, Tailwind's default scale already matches) ────── */
-  --fm-gutter-phone: 16px;
+  --fm-gutter-phone: 20px;
   --fm-gutter-tablet: 24px;
-  --fm-gutter-desktop: 32px;
-  --fm-card-pad: 20px;
+  --fm-gutter-desktop: 40px;
+  --fm-card-pad: 22px;
   --fm-stack: 16px;
   --fm-stack-lg: 24px;
   --fm-row-min-h: 56px;
 
-  /* ── v2 aliases — kept as pass-throughs for one release so existing
-     components and the 317 pre-P3.1 tests keep working unchanged.
-     Three deliberate value changes an alias cannot hide: --danger and
-     --success were re-stepped for CVD separation (DESIGN.md §4.1), and the
-     three macro hues moved to the validated data ramp. ─────────────────── */
+  /**
+   * ── Deprecated name layer ────────────────────────────────────────────────
+   * `gold` is a lie now — these all resolve to violet. They exist so the Bullion-era
+   * call sites (`text-gold-light`, `bg-gold`, `--fm-gold-400`, …) keep rendering while
+   * they are renamed to the `accent` names above. Do not add new uses.
+   */
+  --fm-gold-100: var(--fm-violet-100);
+  --fm-gold-200: var(--fm-violet-200);
+  --fm-gold-300: var(--fm-violet-200);
+  --fm-gold-400: var(--fm-violet-300);
+  --fm-gold-500: var(--fm-violet-400);
+  --fm-gold-600: var(--fm-violet-500);
+  --fm-gold-700: var(--fm-violet-700);
+  --fm-gold-800: var(--fm-violet-800);
+  --fm-gold-900: var(--fm-violet-900);
+
+  /* ── v2 aliases — pass-throughs, see the note above. ────────────────────── */
   --black: var(--fm-black);
   --black-soft: var(--fm-bg-elevated);
   --surface: var(--fm-surface-1);
@@ -152,9 +218,9 @@
   --white: var(--fm-ink-1);
   --gray: var(--fm-ink-3);
   --gray-soft: var(--fm-ink-4);
-  --gold: var(--fm-gold-400);
-  --gold-light: var(--fm-gold-200);
-  --gold-dim: var(--fm-gold-600);
+  --gold: var(--fm-accent);
+  --gold-light: var(--fm-accent-hover);
+  --gold-dim: var(--fm-violet-500);
   --border: var(--fm-border);
   --border-strong: var(--fm-border-strong);
   --danger: var(--fm-danger);
@@ -166,15 +232,20 @@
 
 :root:lang(ar),
 [lang='ar'] {
-  --fm-font-sans: 'Cairo Variable', 'Inter Variable', 'Noto Sans Arabic', system-ui, sans-serif;
+  --fm-font-sans: 'Cairo Variable', 'Noto Sans Arabic', system-ui, sans-serif;
 
-  /* Cairo runs visually smaller and needs more leading than Inter. */
+  /* JetBrains Mono has no Arabic coverage. Pointing the numeral token back at the sans
+     stack keeps Arabic-Indic digits rendering in Cairo instead of silently falling
+     through to a system monospace that may not have them either. */
+  --fm-font-num: var(--fm-font-sans);
+
+  /* Cairo runs visually smaller and needs more leading than Sora. */
   --fm-t-body: 1rem;
   --fm-t-body-sm: 0.875rem;
   --fm-t-label: 0.8125rem;
   --fm-t-eyebrow: 0.75rem;
 
-  --fm-lh-body: 1.65;
+  --fm-lh-body: 1.7;
   --fm-lh-heading: 1.3;
   --fm-lh-tight: 1.15;
 }

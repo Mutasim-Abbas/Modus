@@ -5,6 +5,7 @@ import { Button } from '@/components/Button';
 import { AuthLayout } from '@/features/auth/AuthLayout';
 import { useAuth } from '@/features/auth/AuthContext';
 import { runAdoptionAndNavigate } from '@/features/sync/runAdoptionAndNavigate';
+import { BRAND } from '@/lib/brand';
 
 interface RecoveryCodeState {
   recoveryCode: string;
@@ -101,13 +102,13 @@ export function RecoveryCodeScreen(): JSX.Element {
   };
 
   const handleDownload = (): void => {
-    const blob = new Blob([`FitMacro recovery code for ${state.email}\n${state.recoveryCode}\n`], {
+    const blob = new Blob([`${BRAND.name} recovery code for ${state.email}\n${state.recoveryCode}\n`], {
       type: 'text/plain',
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'fitmacro-recovery-code.txt';
+    link.download = 'modus-recovery-code.txt';
     link.click();
     URL.revokeObjectURL(url);
     setDownloaded(true);

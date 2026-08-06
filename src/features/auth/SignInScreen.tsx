@@ -10,6 +10,7 @@ import { PasswordField } from '@/features/auth/PasswordField';
 import { RateLimitNotice } from '@/features/auth/RateLimitNotice';
 import { useAuth } from '@/features/auth/AuthContext';
 import { AuthError, login } from '@/lib/authApi';
+import { BRAND } from '@/lib/brand';
 import { runAdoptionAndNavigate } from '@/features/sync/runAdoptionAndNavigate';
 
 /**
@@ -63,14 +64,16 @@ export function SignInScreen(): JSX.Element {
 
   return (
     <AuthLayout>
-      <div className="mb-5">
-        <h1 className="text-xl font-extrabold leading-tight text-white">Sign in</h1>
-        <p className="mt-1.5 text-sm leading-relaxed text-gray">
-          Welcome back — your log picks up where you left off.
+      <div className="mb-7 text-center lg:text-start">
+        <h1 className="text-[25px] font-extrabold leading-tight tracking-[-0.03em] text-white lg:text-[28px]">
+          Welcome back
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[28ch] text-[13.5px] leading-relaxed text-fm-text-faint lg:mx-0 lg:max-w-none">
+          Sign in to pick your log up where you left it.
         </p>
       </div>
 
-      <form className="flex flex-col gap-4" onSubmit={(event) => void handleSubmit(event)} noValidate>
+      <form className="flex flex-col gap-3" onSubmit={(event) => void handleSubmit(event)} noValidate>
         <Field
           label="Email"
           type="email"
@@ -86,26 +89,41 @@ export function SignInScreen(): JSX.Element {
           onChange={(event) => setPassword(event.target.value)}
         />
 
+        {/* The mock's "Forgot password?" — pointed at the recovery-code flow, which is
+            the only reset this deployment actually has. Naming it accurately beats
+            copying a label that would promise a reset email we never send. */}
+        <div className="flex justify-end">
+          <Link
+            to="/auth/recover"
+            className="inline-flex min-h-[40px] items-center rounded-sm px-1 text-[12.5px] font-semibold text-fm-accent transition-colors hover:text-fm-accent-hover"
+          >
+            Forgot password? Use a recovery code
+          </Link>
+        </div>
+
         {error && retryAfterSeconds === null ? <AuthErrorBanner message={message()} /> : null}
         {retryAfterSeconds !== null ? <RateLimitNotice retryAfterSeconds={retryAfterSeconds} /> : null}
 
         <Button
           type="submit"
-          className="w-full"
+          className="min-h-[56px] w-full rounded-md text-[14.5px]"
           disabled={submitting || retryAfterSeconds !== null}
           aria-busy={submitting}
         >
           <LogIn size={18} aria-hidden="true" />
           {submitting ? 'Signing in…' : 'Sign in'}
         </Button>
-
-        <Link
-          to="/auth/recover"
-          className="inline-flex min-h-[44px] items-center justify-center rounded-md text-sm font-semibold text-gray transition-colors duration-200 ease-out hover:text-white"
-        >
-          Use a recovery code
-        </Link>
       </form>
+
+      <div className="mt-6 flex items-center justify-center gap-2">
+        <span className="text-[12.5px] text-fm-text-faint">New to {BRAND.name}?</span>
+        <Link
+          to="/auth/sign-up"
+          className="inline-flex min-h-[40px] items-center rounded-sm text-[12.5px] font-bold text-fm-accent transition-colors hover:text-fm-accent-hover"
+        >
+          Create an account
+        </Link>
+      </div>
     </AuthLayout>
   );
 }

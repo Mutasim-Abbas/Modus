@@ -30,6 +30,8 @@ import { isDayKey, toDayKey } from '@/lib/date';
 // The storage key is a fixed identifier, not a version label — it must never change,
 // or every existing user's data becomes unreachable on their next visit. Schema
 // evolution happens entirely through `version` inside the stored blob + MIGRATIONS.
+// The `fitmacro.` prefix is the product's former name, kept on purpose for that reason:
+// the product renamed to Modus, the address where the data lives did not.
 export const STORAGE_KEY = 'fitmacro.v2';
 export const SCHEMA_VERSION = 3;
 
@@ -320,7 +322,7 @@ function hydrate(raw: Record<string, unknown>): AppState {
 
 function safeStorage(): Storage | null {
   try {
-    const probe = '__fitmacro_probe__';
+    const probe = '__modus_probe__';
     window.localStorage.setItem(probe, '1');
     window.localStorage.removeItem(probe);
     return window.localStorage;

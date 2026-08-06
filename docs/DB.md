@@ -1,6 +1,6 @@
-# FitMacro v3 — Database
+# Modus v3 — Database
 
-Owner: `backend-developer` (P2.1). Source of truth for the schema is
+Owner: backend (P2.1). Source of truth for the schema is
 `api/_lib/db/schema.ts`; this document explains **why** each part of it exists, per
 Mutasim's explicit instruction that the reasoning be written down, not just the SQL.
 If this document and the schema ever disagree, the schema is what runs — file a fix here.

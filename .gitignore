@@ -8,10 +8,10 @@ coverage/
 playwright-report/
 test-results/
 
-# NOTE: ./drizzle (migrations, P2.1) is deliberately NOT ignored — the project plan requires
+# NOTE: ./drizzle (migrations, P2.1) is deliberately NOT ignored — the project plan §2 requires
 # committed, reviewable SQL migration files, not generated-and-discarded output.
 
-# Secrets — the Anthropic API key belongs in Vercel env vars, never in the repo.
+# Secrets — the Groq API key belongs in Vercel env vars, never in the repo.
 .env
 .env.*
 !.env.example

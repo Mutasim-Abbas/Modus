@@ -12,6 +12,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { AuthError, deleteAccount } from '@/lib/authApi';
 import { pullCounts, type SyncCounts } from '@/lib/syncApi';
 import { useStore } from '@/lib/useStore';
+import { BRAND } from '@/lib/brand';
 
 const CONFIRM_WORD = 'DELETE';
 
@@ -63,7 +64,7 @@ export function DeleteAccountScreen(): JSX.Element {
         <Card className="flex flex-col gap-3">
           <p role="status" className="text-sm leading-relaxed text-white">
             Your account and everything synced to it are gone. The data on this device stays —
-            FitMacro keeps working offline with your local log.
+            {BRAND.name} keeps working offline with your local log.
           </p>
           <Button onClick={() => navigate('/', { replace: true })}>Go to Today</Button>
         </Card>
@@ -88,7 +89,7 @@ export function DeleteAccountScreen(): JSX.Element {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `fitmacro-export-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `modus-export-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(url);
     setExported(true);
@@ -164,7 +165,7 @@ export function DeleteAccountScreen(): JSX.Element {
           It cannot be undone. We do not keep a copy.
         </p>
         <p className="text-xs font-semibold leading-relaxed text-white">
-          The data on this device stays. You&rsquo;ll be signed out and FitMacro keeps working
+          The data on this device stays. You&rsquo;ll be signed out and {BRAND.name} keeps working
           offline with your local log.
         </p>
       </Card>

@@ -1,6 +1,5 @@
 import { useId, useState } from 'react';
 import type { InputHTMLAttributes } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 interface PasswordFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type'> {
@@ -12,11 +11,20 @@ interface PasswordFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
 }
 
 /**
- * A password input with a 44px reveal toggle (docs/DESIGN.md §7.9). Kept separate from
- * the shared `Field` component because `Field`'s `suffix` slot is decorative
- * (`pointer-events-none`) — this one needs a real, focusable, `aria-pressed` button.
+ * A password input in the same card treatment as `Field`, with a reveal toggle.
+ *
+ * Kept separate from `Field` because `Field`'s `suffix` slot is decorative and
+ * `aria-hidden` — this one needs a real, focusable, `aria-pressed` button. The mock
+ * labels it "Show"/"Hide" as text rather than an eye glyph, which is unambiguous and
+ * needs no icon-only tooltip; the 44px target is preserved.
  */
-export function PasswordField({ label, hint, error, className, ...props }: PasswordFieldProps): JSX.Element {
+export function PasswordField({
+  label,
+  hint,
+  error,
+  className,
+  ...props
+}: PasswordFieldProps): JSX.Element {
   const id = useId();
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
@@ -25,45 +33,54 @@ export function PasswordField({ label, hint, error, className, ...props }: Passw
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-semibold text-white">
-        {label}
-      </label>
-
-      <div className="relative">
-        <input
-          id={id}
-          type={revealed ? 'text' : 'password'}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy || undefined}
-          className={cn(
-            'min-h-[48px] w-full rounded-md border bg-black-soft px-4 pe-12 text-[15px] text-white',
-            'placeholder:text-gray-soft transition-colors duration-200 ease-out',
-            error
-              ? 'border-[color:var(--danger)]'
-              : 'border-[color:var(--border)] focus:border-[color:var(--border-strong)]',
-            className,
-          )}
-          {...props}
-        />
-        <button
-          type="button"
-          onClick={() => setRevealed((value) => !value)}
-          aria-pressed={revealed}
-          aria-label={revealed ? 'Hide password' : 'Show password'}
-          className="absolute end-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-sm text-gray transition-colors hover:bg-surface-3 hover:text-white"
+      <div
+        className={cn(
+          'rounded-lg border-[1.5px] bg-fm-card px-[18px] py-3.5 transition-colors duration-200 ease-out',
+          error
+            ? 'border-[color:var(--danger)]'
+            : 'border-fm-border-neutral focus-within:border-[color:var(--fm-accent)]',
+        )}
+      >
+        <label
+          htmlFor={id}
+          className="mb-1 block text-[9.5px] font-bold uppercase tracking-[0.14em] text-fm-text-faint"
         >
-          {revealed ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
-        </button>
+          {label}
+        </label>
+
+        <div className="flex items-center gap-2.5">
+          <input
+            id={id}
+            type={revealed ? 'text' : 'password'}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy || undefined}
+            className={cn(
+              'h-[26px] min-w-0 flex-1 bg-transparent text-[15px] tracking-[0.04em] text-white',
+              'placeholder:text-fm-text-disabled',
+              className,
+            )}
+            {...props}
+          />
+          <button
+            type="button"
+            onClick={() => setRevealed((value) => !value)}
+            aria-pressed={revealed}
+            aria-label={revealed ? 'Hide password' : 'Show password'}
+            className="-my-2.5 -me-2 shrink-0 rounded-sm px-2 py-2.5 text-[11.5px] font-semibold text-fm-text-faint transition-colors hover:text-white"
+          >
+            {revealed ? 'Hide' : 'Show'}
+          </button>
+        </div>
       </div>
 
       {hint && !error ? (
-        <p id={hintId} className="text-xs text-gray">
+        <p id={hintId} className="px-1 text-xs text-fm-text-faint">
           {hint}
         </p>
       ) : null}
 
       {error ? (
-        <p id={errorId} role="alert" className="text-xs font-medium text-danger">
+        <p id={errorId} role="alert" className="px-1 text-xs font-medium text-danger">
           {error}
         </p>
       ) : null}

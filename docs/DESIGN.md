@@ -1,7 +1,28 @@
-# FitMacro v3 — Design direction & design system
+# Modus v3 — Design direction & design system
 
-**Owner:** design (task P1.1). **Status:** complete, ready to build against.
-**Audience:** the frontend work (P3.1–P3.5, P4.1–P4.2). Read the project plan §5 first — this
+> ## ⚠️ Superseded in part — read this first
+>
+> The app now ships **"Nocturne"** (the `Modus Desktop` / `Modus Phone` designs), not the
+> "Bullion" direction this document specifies. Two things in here are **wrong about the code**:
+>
+> | This document says | The code actually does |
+> | --- | --- |
+> | Warm black + **gold** (`#d4af37`), Manrope/Inter | Blue-black `#12131c` + **violet** `#8b5cf6` / cyan `#22d3ee`, Sora + JetBrains Mono |
+> | Three-tier chrome: phone tab bar → 80 px icon rail → 260 px sidebar + top bar (§6.3, §7.x) | **One floating dock** at every width — `src/app/NavDock.tsx`. `Sidebar`, `IconRail`, `TopBar`, `BottomTabBar` are deleted |
+> | Nav: Today · Log · Scan · Progress · Plan · History · Profile | Nav: **Today · Insights · ➕ · Coach · You**. Routes are unchanged (`/progress`, `/plan`, `/profile`), only the labels and chrome moved |
+> | `.fm-shell` / `.fm-content-grid` 4/8/12-column grid | One centred 1180 px measure; screens compose with plain flex/grid |
+>
+> **`src/styles/tokens.css` is the source of truth for colour, type, radii and elevation.**
+> The `--fm-gold-*` primitives and the `--gold*` aliases still exist there, but they resolve to
+> violet — they are a deprecated name layer kept so ~50 Bullion-era call sites keep rendering.
+>
+> Everything else in this document — the non-negotiables below, the accessibility method, the
+> CVD reasoning, the per-screen information architecture, the RTL rules — still applies and was
+> carried over.
+
+**Owner:** design (task P1.1). **Status:** superseded by Nocturne for §2 (colour), §3
+(effects), §6 (layout/chrome) and the nav parts of §7; the rest still stands.
+**Audience:** frontend (P3.1–P3.5, P4.1–P4.2). Read the project plan §5 first — this
 file is the detailed answer to those bounds.
 
 Everything here is buildable. Every colour is a hex. Every contrast ratio in this document was
@@ -123,8 +144,8 @@ would look most at home.
 adjacent chart colours, cool neutrals do not. On a 27" monitor with six chart cards open, B is
 measurably calmer. It also reads more "instrument / telemetry", which suits the Progress screen.
 
-**Why it is not recommended.** It quietly throws away the thing that makes FitMacro look like
-FitMacro. Gold on cool graphite is the default palette of every crypto dashboard and premium-tier
+**Why it is not recommended.** It quietly throws away the thing that makes Modus look like
+Modus. Gold on cool graphite is the default palette of every crypto dashboard and premium-tier
 SaaS upsell page — it is *close* to the failure mode the project plan forbids, just with a warmer
 accent. And it costs the whole existing surface token set for a benefit only visible on a large
 monitor.
@@ -161,7 +182,7 @@ an unrelated new hue.
 
 **The argument for replacing.** Nutrition logging happens in the daytime, in kitchens, in gyms,
 outdoors, at a desk — the exact conditions where a near-black UI is hardest to read on a phone at
-low brightness in sunlight. Every major competitor is light-first for that reason. A light FitMacro
+low brightness in sunlight. Every major competitor is light-first for that reason. A light Modus
 would also be *more* differentiated in a portfolio full of dark dashboards, not less.
 
 **Why it still loses.** It discards the identity Mutasim built twice and that the project plan names
@@ -874,7 +895,7 @@ Tailwind defaults, with defined behaviour at each:
 ┌──────────┬──────────────────────────────────────────────────────────────┐
 │          │  Wednesday, 12 March 2026        ⟳ Synced 2m   [EN|ع]  (MA) │ 64px top bar
 │  ◆       ├──────────────────────────────────────────────────────────────┤
-│ FitMacro │                                                              │
+│ Modus │                                                              │
 │          │   ┌────────────────────────┬─────────────┬─────────────┐     │
 │ ▸ Today  │   │                        │  Protein    │  Remaining  │     │
 │   Log    │   │      CALORIE RING      │  142/165 g  │  660 kcal   │     │
@@ -1027,7 +1048,7 @@ to load, and a corrupt store falls back to the migration-recovery path with E-9.
 - **Custom-food marking is mandatory and visual, not just a label**: a 20 px `User` lucide icon
   in `--fm-ink-3` inside a `--fm-surface-3` rounded square, plus the text "Custom · your numbers"
   in the row's second line, plus a footnote inside the portion panel:
-  *"You entered these values. FitMacro hasn't checked them."* Reference foods get no badge but do
+  *"You entered these values. Modus hasn't checked them."* Reference foods get no badge but do
   get "Approximate reference values per 100 g" in the panel.
 
 **Edit entry — `/log/entry/:id`** (sheet on phone, 480 px dialog on desktop):
@@ -1135,7 +1156,7 @@ shows "You already logged 81.4 kg for 12 March. Replace it?" with `Replace` / `C
 ### 7.9 Auth screens
 
 All auth screens use a **centred single-column card**, max-inline-size 420 px, on the page
-background, with the FitMacro mark above it. No sidebar, no tab bar. On desktop the card is
+background, with the Modus mark above it. No sidebar, no tab bar. On desktop the card is
 vertically centred; on phone it sits 48 px from the top so the keyboard does not cover it.
 
 **Guest mode is never blocked.** Every auth screen has a visible
@@ -1143,7 +1164,7 @@ vertically centred; on phone it sits 48 px from the top so the keyboard does not
 
 #### `/auth/sign-up` — Create account
 ```
-◆ FitMacro
+◆ Modus
 Create an account
 Your log syncs to every device you sign in on.
 
@@ -1225,7 +1246,7 @@ This deletes your account and everything synced to it:
 It cannot be undone. We do not keep a copy.
 
 The data on THIS DEVICE stays. You'll be signed out and
-FitMacro keeps working offline with your local log.
+Modus keeps working offline with your local log.
 
 [ Export my data first (.json) ]        ← secondary, tracked
 Type DELETE to confirm   [        ]
@@ -1298,7 +1319,7 @@ Sign-in never deletes anything. Choose how to put them together.
 └────────────────────────────┘  └────────────────────────────┘
 
 [ ⤓ Download a backup of this device's data (.json) ]   ← secondary, full width
-   ✓ Backup saved (fitmacro-backup-2026-03-12.json)     ← replaces the button once done
+   ✓ Backup saved (modus-backup-2026-03-12.json)     ← replaces the button once done
 
 Choose one:
 ┌────────────────────────────────────────────────────────┐
@@ -1347,7 +1368,7 @@ Decide later — keep working offline   ← LinkButton
      This device   180 g · 297 kcal · changed today 14:02   ← will be kept
      Your account  200 g · 330 kcal · changed 10 Mar 21:30
    ```
-   Read-only, with an explicit sentence: *"FitMacro keeps the newer change. After merging you
+   Read-only, with an explicit sentence: *"Modus keeps the newer change. After merging you
    can edit any of these on the Log screen."* This is honest about last-write-wins
    (the project plan §2) instead of hiding it.
 7. **Progress state** while committing: the choice cards freeze (`aria-busy="true"`), a
@@ -1479,15 +1500,15 @@ title `--fm-t-h3`, body `--fm-t-body-sm` `--fm-ink-3` max 38ch, then actions.
 
 | ID | Where | Icon | Title | Body | Actions |
 | --- | --- | --- | --- | --- | --- |
-| **E-1** | Profile → Account, signed out (sync configured) | `UserRoundPlus` | "You're not signed in" | "FitMacro is saving everything on this device. Create an account and your log follows you to your phone, laptop and back." | `Create account` (primary) · `Sign in` (ghost) |
+| **E-1** | Profile → Account, signed out (sync configured) | `UserRoundPlus` | "You're not signed in" | "Modus is saving everything on this device. Create an account and your log follows you to your phone, laptop and back." | `Create account` (primary) · `Sign in` (ghost) |
 | **E-2** | Progress, no data at all | `TrendingUp` | "Nothing to show yet" | "Log a few days of food and add a weight reading — your trends appear here once there's something real to draw." | `Log food` (primary) · `Add weight` (secondary) |
 | **E-3** | Today / Log, nothing logged for the selected day | `UtensilsCrossed` | "Nothing logged for Wednesday" | "Search the food database, scan a photo, or copy yesterday." | `Search foods` (primary) · `Copy yesterday` (secondary, disabled + tooltip if yesterday is empty) |
-| **E-4** | Profile → Account, `sync_unconfigured` | `CloudOff` | "Accounts aren't set up on this deployment" | "This copy of FitMacro has no database connected, so there's nothing to sign in to. Everything still works and stays on this device." | `Export my data` (secondary) |
+| **E-4** | Profile → Account, `sync_unconfigured` | `CloudOff` | "Accounts aren't set up on this deployment" | "This copy of Modus has no database connected, so there's nothing to sign in to. Everything still works and stays on this device." | `Export my data` (secondary) |
 | **E-5** | Scan, 503 `ai_unconfigured` | `CameraOff` | "Photo scanning isn't set up here" | "This deployment has no AI key, so scanning is switched off. You can still log any of the 184 foods by searching." | `Search foods` (primary) |
 | **E-6** | Progress → Weight card, < 2 readings | `Scale` | "One reading — no trend yet" *(or "No weight readings yet")* | "Add another reading on a different day and the trend line appears." | `Add today's weight` (primary) |
 | **E-7** | Log search, no matches | `SearchX` | "No food matches "labnehh"" | "Check the spelling, try a shorter word, or add it as your own food." | `Create "labnehh" as a custom food` (primary) |
 | **E-8** | `/sync/merge`, commit failed | `AlertTriangle`, tone `danger` | "The merge didn't finish" | "Nothing on this device was changed and nothing was deleted. Your log is exactly as it was." | `Try again` (primary) · `Decide later` (ghost) |
-| **E-9** | App boot, stored data could not be read | `FileWarning`, tone `warn` | "We couldn't read your saved data" | "FitMacro found data it doesn't recognise and hasn't touched it. You can download the raw file and start a fresh log." | `Download the raw file` (secondary) · `Start fresh` (danger-quiet, typed confirm) |
+| **E-9** | App boot, stored data could not be read | `FileWarning`, tone `warn` | "We couldn't read your saved data" | "Modus found data it doesn't recognise and hasn't touched it. You can download the raw file and start a fresh log." | `Download the raw file` (secondary) · `Start fresh` (danger-quiet, typed confirm) |
 | **E-10** | Offline + never synced, on `/account` | `WifiOff`, tone `warn` | "You're offline" | "4 changes are saved on this device and will sync as soon as you're back online. Nothing is lost." | `Retry now` (secondary) |
 | **E-11** | Favourites, none yet | `Star` | "No favourites yet" | "Tap the star on any food and it lands here for one-tap logging." | `Browse foods` (primary) |
 | **E-12** | Custom foods, none yet | `UserRoundPen` | "No foods of your own yet" | "Add anything the database doesn't have — your own recipe, a local brand, your protein shake." | `Add a custom food` (primary) |
@@ -1574,14 +1595,14 @@ reduced motion, with a static fallback, and *never* required to read a number. A
 Three.js core alone lands in the ~110–150 KB gzipped range before you add React Three Fiber and
 drei — so **R3F/Three.js does not fit this budget** and is out. The
 `modern-3d-ui-design` skill's own decision table also says: *"Dashboard → bento grid, data-dense,
-minimal motion, no 3D unless a dataset genuinely has 3 axes."* FitMacro's data has two axes.
+minimal motion, no 3D unless a dataset genuinely has 3 axes."* Modus's data has two axes.
 
 So v3 gets **depth**, not a 3D engine.
 
 ### 11.1 Tier 1 — CSS depth (default, 0 KB, ships to everyone)
 
 - **Surface stepping + one shadow scale** (§3.4) carries the hierarchy.
-- **Onboarding hero mark**: the gold `◆` FitMacro mark on a `transform-style: preserve-3d`
+- **Onboarding hero mark**: the gold `◆` Modus mark on a `transform-style: preserve-3d`
   wrapper with `perspective: 900px`, tilting ±6° on pointer move (`rotateX`/`rotateY` driven by
   a `requestAnimationFrame`-throttled pointer handler). Desktop only, pointer devices only
   (`@media (hover: hover) and (pointer: fine)`).
@@ -1715,8 +1736,8 @@ Enable Tailwind's logical-property utilities (`ps-`, `pe-`, `ms-`, `me-`, `start
 
 | Decision | Owner | Note |
 | --- | --- | --- |
-| `user_settings.theme` stays in the schema but is written as `'dark'` and never exposed | `backend-developer` | §2.0 — no theme toggle in v3 |
-| Merge screen needs pre-commit **counts** from the sync API before it can render | `backend-developer` | `/api/sync/pull` must return per-table counts and a `conflicts[]` preview (id, table, both `updated_at`s), or the client must compute them from a full first pull. §7.11 rule 1 depends on it. |
-| Arabic food names (`nameAr` × 184) | the frontend work (P3.5) | Design assumes they exist; the Log row layout allows the Arabic name as the primary line with the English underneath in `--fm-ink-4` when `lang=ar` |
-| Recovery-code format (5 × 4 chars, Crockford-style alphabet excluding `I L O U`) | `backend-developer` | §7.9 renders it in mono and hyphenates every 4 — the alphabet choice is a security/UX decision that should match |
-| Streak rule (±15 % of calorie target, ≥1 entry) | the frontend work (P3.3) | §4.2.5 states it on screen; if the implemented rule differs, the on-screen sentence must change with it |
+| `user_settings.theme` stays in the schema but is written as `'dark'` and never exposed | backend | §2.0 — no theme toggle in v3 |
+| Merge screen needs pre-commit **counts** from the sync API before it can render | backend | `/api/sync/pull` must return per-table counts and a `conflicts[]` preview (id, table, both `updated_at`s), or the client must compute them from a full first pull. §7.11 rule 1 depends on it. |
+| Arabic food names (`nameAr` × 184) | frontend (P3.5) | Design assumes they exist; the Log row layout allows the Arabic name as the primary line with the English underneath in `--fm-ink-4` when `lang=ar` |
+| Recovery-code format (5 × 4 chars, Crockford-style alphabet excluding `I L O U`) | backend | §7.9 renders it in mono and hyphenates every 4 — the alphabet choice is a security/UX decision that should match |
+| Streak rule (±15 % of calorie target, ≥1 entry) | frontend (P3.3) | §4.2.5 states it on screen; if the implemented rule differs, the on-screen sentence must change with it |

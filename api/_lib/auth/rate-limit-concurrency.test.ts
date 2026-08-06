@@ -113,7 +113,7 @@ describe('reserveAttempt under concurrency — F-01', () => {
  * pre-fix code let through completely.
  */
 describe('POST /api/auth/login under concurrency — F-01 end to end', () => {
-  const ORIGIN = 'https://fitmacro.test';
+  const ORIGIN = 'https://modus.test';
   const loginReq = (email: string, password: string, ip: string) =>
     new Request(ORIGIN + '/api/auth/login', {
       method: 'POST',

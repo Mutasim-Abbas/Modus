@@ -12,8 +12,13 @@ interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
 }
 
 /**
- * A labelled text/number input. The label is always a real <label for>, never a
- * placeholder — placeholders disappear and screen readers skip them.
+ * A labelled text/number input, in the Modus treatment: the label is a tracked-out micro
+ * caption sitting *inside* the field's own card, and the whole card takes the accent
+ * border on focus rather than the input drawing a second box within a box.
+ *
+ * The label is still a real `<label for>`, never a placeholder — placeholders disappear
+ * and screen readers skip them. Moving it inside the card changed only where it is
+ * painted, so `getByLabelText` keeps working everywhere.
  */
 export function Field({
   label,
@@ -30,45 +35,49 @@ export function Field({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-semibold text-white">
-        {label}
-      </label>
+      <div
+        className={cn(
+          'rounded-lg border-[1.5px] bg-fm-card px-[18px] py-3.5 transition-colors duration-200 ease-out',
+          error
+            ? 'border-[color:var(--danger)]'
+            : 'border-fm-border-neutral focus-within:border-[color:var(--fm-accent)]',
+        )}
+      >
+        <label
+          htmlFor={id}
+          className="mb-1 block text-[9.5px] font-bold uppercase tracking-[0.14em] text-fm-text-faint"
+        >
+          {label}
+        </label>
 
-      <div className="relative">
-        <input
-          id={id}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy || undefined}
-          className={cn(
-            'min-h-[48px] w-full rounded-md border bg-black-soft px-4 text-[15px] text-white',
-            'placeholder:text-gray-soft',
-            'transition-colors duration-200 ease-out',
-            error
-              ? 'border-[color:var(--danger)]'
-              : 'border-[color:var(--border)] focus:border-[color:var(--border-strong)]',
-            suffix ? 'pe-12' : '',
-            className,
-          )}
-          {...props}
-        />
-        {suffix ? (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute end-4 top-1/2 -translate-y-1/2 text-sm text-gray"
-          >
-            {suffix}
-          </span>
-        ) : null}
+        <div className="flex items-center gap-2.5">
+          <input
+            id={id}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy || undefined}
+            className={cn(
+              'h-[26px] min-w-0 flex-1 bg-transparent text-[15px] text-white',
+              'placeholder:text-fm-text-disabled',
+              className,
+            )}
+            {...props}
+          />
+          {suffix ? (
+            <span aria-hidden="true" className="shrink-0 text-sm text-fm-text-faint">
+              {suffix}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {hint && !error ? (
-        <p id={hintId} className="text-xs text-gray">
+        <p id={hintId} className="px-1 text-xs text-fm-text-faint">
           {hint}
         </p>
       ) : null}
 
       {error ? (
-        <p id={errorId} role="alert" className="text-xs font-medium text-danger">
+        <p id={errorId} role="alert" className="px-1 text-xs font-medium text-danger">
           {error}
         </p>
       ) : null}

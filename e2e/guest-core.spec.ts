@@ -13,7 +13,7 @@ import {
 /**
  * REAL-BACKEND (in the only sense that exists locally): these specs use no mocked
  * success responses at all. `/api/*` answers `503 …_unconfigured`, which is exactly
- * what `api/` returns when `DATABASE_URL` / `SESSION_PEPPER` / `ANTHROPIC_API_KEY` are
+ * what `api/` returns when `DATABASE_URL` / `SESSION_PEPPER` / `GROQ_API_KEY` are
  * unset — the real state of this machine (the project notes: no Neon project exists and
  * none may be created).
  *
@@ -26,8 +26,8 @@ import {
 interface RouteCheck {
   path: string;
   heading: RegExp;
-  /** `/more` is a phone/tablet hub; at desktop the sidebar already shows everything, so
-   *  the route deliberately redirects to `/profile` (src/features/more/MoreScreen.tsx). */
+  /** `/more` is a phone/tablet hub; at desktop it deliberately redirects to `/profile`
+   *  (src/features/more/MoreScreen.tsx). */
   desktopRedirect?: { path: string; heading: RegExp };
 }
 
@@ -35,8 +35,8 @@ const APP_ROUTES: RouteCheck[] = [
   { path: '/', heading: /kcal (left|over)/ },
   { path: '/log', heading: /^Add food$/ },
   { path: '/scan', heading: /Estimate a meal from a photo/ },
-  { path: '/progress', heading: /Weight and macro trends/ },
-  { path: '/plan', heading: /A day built from the food database/ },
+  { path: '/progress', heading: /How it.s going/ },
+  { path: '/plan', heading: /Plan it or scan it/ },
   { path: '/history', heading: /Your logged days/ },
   { path: '/profile', heading: /Your details and targets/ },
   { path: '/profile/weight', heading: /Weight log/ },
@@ -65,8 +65,9 @@ test.describe('guest mode — the journey a user with no account actually takes'
 
     await onboard(page, { age: 30, heightCm: 180, weightKg: 80 });
 
-    // Mifflin-St Jeor for a 30 y/o 180 cm 80 kg male, moderate (1.55), maintain.
-    await expect(page.getByText(/of 2761 kcal logged/)).toBeVisible();
+    // Mifflin-St Jeor for a 30 y/o 180 cm 80 kg male, moderate (1.55), maintain. The
+    // headline counts down what is left, so on a fresh day it states the whole target.
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^2761 kcal left$/);
 
     await page.goto('/log');
     await logFoodFromSearch(page, 'banana', 'Banana, fruit, 89 kcal per 100 g');
@@ -85,9 +86,9 @@ test.describe('guest mode — the journey a user with no account actually takes'
     expect(persisted).not.toBeNull();
     expect(persisted?.version).toBe(3);
 
-    // And it is on the dashboard total too, not only in the log list.
+    // And it is on the dashboard total too, not only in the log list: 2761 − 105 = 2656.
     await page.goto('/');
-    await expect(page.getByText(/105 of 2761 kcal logged/)).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^2656 kcal left$/);
 
     expect(realErrors(errors)).toEqual([]);
   });

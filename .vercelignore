@@ -8,7 +8,7 @@
 # Without this line, deployment would try to ship ~11 extra "functions" that import
 # vitest/@electric-sql/pglite and have no fetch handler, on top of the 11 real routes
 # — comfortably over the Hobby plan's 12-Serverless-Function-per-deployment cap.
-# Verified against the deployment runbook; see there for
+# Verified against the project plan's "Vercel function count" section; see there for
 # the exact count and how it was derived. This does not affect local `npm test`,
 # which runs against the full git checkout, not this file.
 api/**/*.test.ts

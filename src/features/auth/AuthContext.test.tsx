@@ -24,7 +24,7 @@ function Probe(): JSX.Element {
     <div>
       <p data-testid="status">{auth.status}</p>
       <p data-testid="email">{auth.user?.email ?? ''}</p>
-      <button onClick={() => auth.signIn({ id: 'u1', email: 'me@fitmacro.test', emailVerified: false, createdAt: '' })}>
+      <button onClick={() => auth.signIn({ id: 'u1', email: 'me@modus.test', emailVerified: false, createdAt: '' })}>
         sign-in
       </button>
       <button onClick={() => auth.handleAuthError(new AuthError('unauthorized', 'expired'))}>
@@ -48,14 +48,14 @@ afterEach(() => {
 
 describe('AuthContext — boot probe', () => {
   it('resolves to signed-in when GET /api/auth/me succeeds', async () => {
-    mockFetch(200, { user: { id: 'u1', email: 'me@fitmacro.test', emailVerified: false, createdAt: '' } });
+    mockFetch(200, { user: { id: 'u1', email: 'me@modus.test', emailVerified: false, createdAt: '' } });
     render(
       <AuthProvider>
         <Probe />
       </AuthProvider>,
     );
     expect(await screen.findByText('signed-in')).toBeInTheDocument();
-    expect(screen.getByTestId('email')).toHaveTextContent('me@fitmacro.test');
+    expect(screen.getByTestId('email')).toHaveTextContent('me@modus.test');
   });
 
   it('resolves to guest on 401 — guest mode is the default, never a wall', async () => {
@@ -131,7 +131,7 @@ describe('AuthContext — a 401 mid-session drops to guest without losing local 
 
 describe('AuthContext — sync_unconfigured hides auth entirely', () => {
   it('an unauthorized error observed elsewhere does not override an already-known unconfigured state incorrectly, and vice versa', async () => {
-    mockFetch(200, { user: { id: 'u1', email: 'me@fitmacro.test', emailVerified: false, createdAt: '' } });
+    mockFetch(200, { user: { id: 'u1', email: 'me@modus.test', emailVerified: false, createdAt: '' } });
     const user = userEvent.setup();
     render(
       <AuthProvider>
@@ -149,7 +149,7 @@ describe('AuthContext — sync_unconfigured hides auth entirely', () => {
 describe('AuthContext — no token in storage', () => {
   it('never writes to localStorage or sessionStorage while booting or changing auth state', async () => {
     const localSetItem = vi.spyOn(Storage.prototype, 'setItem');
-    mockFetch(200, { user: { id: 'u1', email: 'me@fitmacro.test', emailVerified: false, createdAt: '' } });
+    mockFetch(200, { user: { id: 'u1', email: 'me@modus.test', emailVerified: false, createdAt: '' } });
     const user = userEvent.setup();
     render(
       <AuthProvider>

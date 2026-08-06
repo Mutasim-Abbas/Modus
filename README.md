@@ -1,4 +1,4 @@
-# FitMacro
+# Modus
 
 A nutrition tracker that works the moment you open it, with no account: calculate your
 calorie and macro targets from a real formula, log real foods from a curated database,
@@ -98,7 +98,7 @@ write a browsable HTML report (with traces on failure) to `playwright-report/`.
 
 ## Your data — read this before you sign up
 
-FitMacro tries never to claim more than it does.
+Modus tries never to claim more than it does.
 
 **As a guest (the default):** everything you log is stored in this browser's
 `localStorage`, on this device only. It is not uploaded anywhere, and no one else can see
@@ -111,16 +111,16 @@ device" promise no longer applies once you sign in. You choose when that happens
 syncs until you create an account and sign in.
 
 Signing in never overwrites your local data silently — if both your device and your
-account already have data, FitMacro stops and asks you which to keep, showing real counts
+account already have data, Modus stops and asks you which to keep, showing real counts
 and the exact number of rows a destructive choice would remove.
 
 ### Three things you should know before creating an account
 
 These are deliberate trade-offs, documented in
-the internal security audit §5. They are written here because a
+[the internal security audit](./the internal security audit) §5. They are written here because a
 trade-off nobody tells you about is just a hidden defect.
 
-1. **Someone who knows your email can lock you out for up to 15 minutes.** FitMacro limits
+1. **Someone who knows your email can lock you out for up to 15 minutes.** Modus limits
    failed sign-in attempts per account (8 wrong passwords in 15 minutes, 5 wrong recovery
    codes in an hour). That limit is what stops someone guessing your password — but it
    also means anyone who knows your email address can deliberately trip it, and you will
@@ -129,26 +129,26 @@ trade-off nobody tells you about is just a hidden defect.
    is at risk and this cannot be used to *gain* access to your account — only to
    temporarily deny you yours. (Finding F-05.2.)
 
-2. **Sign-up reveals whether an email address already has a FitMacro account.** If you try
+2. **Sign-up reveals whether an email address already has a Modus account.** If you try
    to create an account with an email that is already registered, the app tells you so
    ("That email already has an account") instead of a vague error, because the vague
    version is genuinely worse for real people. Signing in and recovery deliberately do
    *not* leak this — but sign-up does, and for a nutrition and body-weight app "does this
    person have an account here" is itself personal information. So: it is disclosed, on
-   purpose, and FitMacro does not claim to have "no user enumeration". (Finding F-12.)
+   purpose, and Modus does not claim to have "no user enumeration". (Finding F-12.)
 
-3. **The per-IP request limit assumes FitMacro is running behind Vercel's proxy.** The
+3. **The per-IP request limit assumes Modus is running behind Vercel's proxy.** The
    rate limiter reads Vercel's `x-vercel-forwarded-for` / `x-real-ip` headers to identify
    a caller's IP address. On Vercel that is trustworthy. **On any other host, or behind a
    different proxy, those headers can be forged**, and the per-IP limit stops being a real
    control — the per-account limit (keyed on the submitted email, which no header can
-   forge) is what still holds. Anyone deploying FitMacro somewhere other than Vercel must
+   forge) is what still holds. Anyone deploying Modus somewhere other than Vercel must
    revisit `clientIpFrom` in `api/_lib/rate-limit.ts` first. This is also stated as a
-   platform prerequisite in the internal project notes. (Finding F-14.)
+   platform prerequisite in [the project plan](./the project plan). (Finding F-14.)
 
 ### There is no password-reset email
 
-FitMacro sends no email at all — every free email service needs a paid domain, so rather
+Modus sends no email at all — every free email service needs a paid domain, so rather
 than pretend, there isn't one. Your account's only recovery path is the **recovery code**
 shown once, immediately after sign-up. Save it. If you lose both your password and that
 code, the account cannot be recovered; your local data on each device is untouched either
@@ -187,8 +187,8 @@ NaN or a negative target.
 
 Vite · React 18 · TypeScript (strict) · Tailwind · Framer Motion (restrained) ·
 lucide-react · react-router · Vitest + React Testing Library · Playwright ·
-vite-plugin-pwa · Drizzle ORM + Postgres (Neon) · argon2id · Anthropic SDK ·
-targeted at Vercel.
+vite-plugin-pwa · Drizzle ORM + Postgres (Neon) · argon2id · Groq (vision, via plain
+`fetch` — no AI SDK) · targeted at Vercel.
 
 ## Architecture
 
@@ -220,7 +220,9 @@ api/
   _lib/                 validation, rate limiting, sessions, row serialisation
 drizzle/                committed SQL migrations
 e2e/                    Playwright specs (see Tests)
-docs/                   DESIGN, API, DB
+legacy/                 v1, preserved untouched
+docs/                   BRIEF, PLAN, TODO, DESIGN, API, DB, DEPLOY,
+                        SECURITY-AUDIT, RESUME
 ```
 
 ## Security posture
@@ -240,7 +242,7 @@ docs/                   DESIGN, API, DB
   checked, not assumed.
 
 Three security passes are written up in full, including what was tried and *failed* to
-break, in the internal security audit.
+break, in [the internal security audit](./the internal security audit).
 
 ## PWA & offline
 

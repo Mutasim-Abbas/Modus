@@ -60,7 +60,7 @@ export const LIMITS = {
 
 /**
  * Lower bound on a recommended daily calorie target. A widely used general guideline,
- * applied here as a safety floor — FitMacro is not medical advice.
+ * applied here as a safety floor — Modus is not medical advice.
  */
 export const MIN_KCAL_FLOOR = 1200;
 

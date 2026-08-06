@@ -84,7 +84,7 @@ export async function readStorage(page: Page, key: string): Promise<unknown> {
 
 /**
  * The honest local-preview baseline: no `DATABASE_URL`, no `SESSION_PEPPER`, no
- * `ANTHROPIC_API_KEY`, so every backend feature reports itself unconfigured exactly as
+ * `GROQ_API_KEY`, so every backend feature reports itself unconfigured exactly as
  * `api/` does when those env vars are missing (docs/API.md, "Errors common to every
  * route"). This is not a mock of a working backend — it is the real shape of the
  * deployment the specs actually run against.

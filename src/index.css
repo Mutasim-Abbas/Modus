@@ -1,4 +1,4 @@
-/* Direction A ("Bullion") tokens — the single source of colour. See docs/DESIGN.md §2. */
+/* Direction "Nocturne" tokens — the single source of colour. See src/styles/tokens.css. */
 @import './styles/tokens.css';
 
 @tailwind base;
@@ -75,24 +75,54 @@
     @apply mx-auto w-full max-w-app;
   }
 
+  /* The Nocturne card: a near-flat dark panel separated by a hairline, not by a
+     brightness step. Radius is the xl step (28px) — the mocks are markedly rounder than
+     the previous direction. */
   .card {
-    @apply rounded-lg border border-[color:var(--border)] p-5;
-    /* Alpha is written out rather than using Tailwind's `bg-surface/90` modifier:
-       `--surface` is now an alias (`var(--fm-surface-1)`, tokens.css) instead of v2's
-       literal hex, and Tailwind cannot compute an alpha channel through a var() it
-       can't resolve at build time. See docs/DESIGN.md §13.1. */
-    background-color: color-mix(in srgb, var(--surface) 90%, transparent);
+    @apply rounded-xl border border-[color:var(--border)] p-[var(--fm-card-pad)];
+    /* Alpha is written out rather than using Tailwind's `bg-fm-card/90` modifier:
+       `--fm-card` is an alias (`var(--fm-surface-0)`) rather than a literal hex, and
+       Tailwind cannot compute an alpha channel through a var() it can't resolve at
+       build time. */
+    background-color: color-mix(in srgb, var(--fm-card) 92%, transparent);
+  }
+
+  /* The tinted hero panel — the calorie ring, "how your target is computed". */
+  .card-hero {
+    @apply relative overflow-hidden rounded-xl border p-7;
+    border-color: rgba(255, 255, 255, 0.07);
+    background: var(--tw-gradient-stops, none);
+    background-image: linear-gradient(
+      160deg,
+      rgba(139, 92, 246, 0.17),
+      rgba(26, 28, 40, 0.96) 48%
+    );
+    background-color: var(--fm-surface-0);
+    box-shadow: var(--fm-elev-3);
+  }
+  /* The blurred violet orb the mocks bleed out of the hero panel's top-right corner. */
+  .card-hero::before {
+    content: '';
+    position: absolute;
+    inset-block-start: -90px;
+    inset-inline-end: -70px;
+    inline-size: 240px;
+    block-size: 240px;
+    border-radius: 99px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.34), transparent 68%);
+    filter: blur(12px);
+    pointer-events: none;
   }
 
   .eyebrow {
-    @apply mb-2 inline-block text-xs font-bold uppercase tracking-[0.12em] text-gold-light;
+    @apply mb-2 inline-block text-[11px] font-semibold uppercase tracking-[0.16em] text-fm-text-faint;
   }
 
-  /* Ambient grid, straight from v1 */
+  /* Ambient grid — cool white hairlines now that the ground is blue-black, not warm. */
   .ambient-grid {
     background-image:
-      linear-gradient(rgba(240, 216, 121, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(240, 216, 121, 0.03) 1px, transparent 1px);
+      linear-gradient(rgba(196, 181, 253, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(196, 181, 253, 0.028) 1px, transparent 1px);
     background-size: 38px 38px;
     -webkit-mask-image: linear-gradient(to bottom, black, transparent 82%);
     mask-image: linear-gradient(to bottom, black, transparent 82%);
@@ -117,12 +147,12 @@
      state — glass costs clarity on data-dense surfaces. */
   .fm-glass {
     position: relative;
-    background: linear-gradient(160deg, rgba(38, 34, 26, 0.72), rgba(20, 19, 17, 0.86));
-    -webkit-backdrop-filter: blur(18px) saturate(118%);
-    backdrop-filter: blur(18px) saturate(118%);
+    background: rgba(22, 24, 34, 0.86);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
+    backdrop-filter: blur(22px) saturate(120%);
     box-shadow:
-      var(--fm-elev-2),
-      inset 0 1px 0 rgba(247, 245, 240, 0.06);
+      var(--fm-elev-3),
+      inset 0 1px 0 rgba(228, 231, 242, 0.06);
   }
   .fm-glass::before {
     content: '';
@@ -132,9 +162,9 @@
     padding: 1px;
     background: linear-gradient(
       160deg,
-      rgba(240, 216, 121, 0.34),
-      rgba(240, 216, 121, 0.06) 42%,
-      rgba(247, 245, 240, 0.05)
+      rgba(196, 181, 253, 0.3),
+      rgba(196, 181, 253, 0.06) 42%,
+      rgba(228, 231, 242, 0.05)
     );
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
@@ -148,66 +178,15 @@
   }
   @supports not (backdrop-filter: blur(1px)) {
     .fm-glass {
-      background: #161513;
-      background-color: #161513;
+      background: #161822;
+      background-color: #161822;
     }
   }
 
-  /* The responsive app shell grid: phone gets one column with a bottom tab bar drawn
-     outside the grid; md gets an 80px icon rail; lg+ gets a full 260px sidebar.
-     DESIGN.md §6.3. */
-  .fm-shell {
-    display: grid;
-    grid-template-columns: 1fr;
-    min-block-size: 100dvh;
-  }
-  @media (min-width: 768px) {
-    .fm-shell {
-      grid-template-columns: 80px 1fr;
-    }
-  }
-  @media (min-width: 1024px) {
-    .fm-shell {
-      grid-template-columns: 260px 1fr;
-    }
-  }
-
-  /* The content grid every screen lays cards into. DESIGN.md §6.3.
-     `inline-size: 100%` is load-bearing: as a flex item this element's `margin-inline:
-     auto` (added at ≥1024 below) disables cross-axis stretch per the flexbox spec, so
-     without an explicit 100% it shrinks-to-fit its (empty) content instead of filling
-     the row before `max-inline-size` caps it — the classic "centered container" bug. */
-  .fm-content-grid {
-    display: grid;
-    inline-size: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-  }
-  @media (min-width: 768px) {
-    .fm-content-grid {
-      grid-template-columns: repeat(8, minmax(0, 1fr));
-      gap: 20px;
-    }
-  }
-  @media (min-width: 1024px) {
-    .fm-content-grid {
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap: 24px;
-      max-inline-size: 1100px;
-      margin-inline: auto;
-    }
-  }
-  @media (min-width: 1280px) {
-    .fm-content-grid {
-      max-inline-size: 1200px;
-    }
-  }
-  @media (min-width: 1536px) {
-    .fm-content-grid {
-      max-inline-size: 1320px;
-      gap: 32px;
-    }
-  }
+  /* `.fm-shell` (the three-tier sidebar/rail grid) and `.fm-content-grid` (the 4/8/12
+     column content grid) were removed with the chrome they existed for. Nocturne is one
+     centred measure at every width, capped in `AppShell` — there is no column grid to
+     lay cards into, so screens compose with plain flex/grid instead. */
 }
 
 @layer utilities {

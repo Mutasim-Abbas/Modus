@@ -13,6 +13,7 @@ import { SyncChip } from '@/features/sync/SyncChip';
 import { useSyncEngineState } from '@/lib/sync/useSyncEngineState';
 import { syncEngine } from '@/lib/sync/engine';
 import { formatRelativeTime } from '@/lib/sync/relativeTime';
+import { BRAND } from '@/lib/brand';
 
 /**
  * `/account` (docs/DESIGN.md §7.9). Guest mode is never blocked — a signed-out visitor
@@ -45,7 +46,7 @@ export function AccountScreen(): JSX.Element {
         <EmptyState
           icon={UserRoundPlus}
           title="You're not signed in"
-          description="FitMacro is saving everything on this device. Create an account and your log follows you to your phone, laptop and back."
+          description={`${BRAND.name} is saving everything on this device. Create an account and your log follows you to your phone, laptop and back.`}
           action={
             <div className="flex w-full flex-col gap-2 sm:flex-row">
               <LinkButton to="/auth/sign-up" className="flex-1">

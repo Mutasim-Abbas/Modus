@@ -82,7 +82,17 @@ describe('ScanScreen — honest framing', () => {
 
   it('says what happens to the photo', () => {
     renderScan();
-    expect(screen.getByText(/not stored by fitmacro/i)).toBeInTheDocument();
+    // The product name is interpolated from BRAND, so the sentence spans several text
+    // nodes — match the paragraph rather than a substring that straddles the boundary.
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'P' &&
+          /sent to the server only to be analysed, and is not stored by/i.test(
+            element.textContent ?? '',
+          ),
+      ),
+    ).toBeInTheDocument();
   });
 });
 

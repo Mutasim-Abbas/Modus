@@ -116,7 +116,10 @@ test.describe('MOCK-BACKED: accounts and sync', () => {
     await expect(deviceB).toHaveURL(/\/$/, { timeout: 15_000 });
 
     // The profile came down too, so device B is NOT bounced back into onboarding.
-    await expect(deviceB.getByText(/of 2761 kcal logged/)).toBeVisible();
+    // A computed headline can only exist if the profile arrived — an onboarding-less
+    // dashboard would have no targets to count down from.
+    await expect(deviceB.getByRole('heading', { level: 1 })).toHaveText(/kcal (left|over)$/);
+    await expect(deviceB.getByText(/\d+ \/ 2761/)).toBeVisible();
 
     await deviceB.goto('/log');
     await expect(deviceB.getByRole('button', { name: 'Edit Banana' })).toBeVisible();

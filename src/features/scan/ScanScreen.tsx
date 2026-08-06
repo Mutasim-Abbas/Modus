@@ -23,6 +23,7 @@ import {
   markScanAvailable,
   markScanUnavailable,
 } from '@/features/scan/availability';
+import { BRAND } from '@/lib/brand';
 
 type Status =
   | { phase: 'idle' }
@@ -246,7 +247,7 @@ export function ScanScreen(): JSX.Element {
       <div className="flex gap-2 rounded-md border border-[color:var(--border)] bg-surface-2/50 px-3 py-3">
         <Upload size={14} className="mt-0.5 shrink-0 text-gray-soft" aria-hidden="true" />
         <p className="text-[11px] leading-relaxed text-gray-soft">
-          Your photo is sent to the server only to be analysed, and is not stored by FitMacro.
+          Your photo is sent to the server only to be analysed, and is not stored by {BRAND.name}.
           AI estimates are rough — always check the numbers before logging them.
         </p>
       </div>

@@ -1,6 +1,6 @@
 import { defineConfig } from 'drizzle-kit';
 
-// Scaffolding for P2.1 (backend-developer) — this file has nothing to point at yet.
+// Scaffolding for P2.1 (backend) — this file has nothing to point at yet.
 // `api/_lib/db/schema.ts` does not exist until P2.1 lands; api/_lib is where the rest of
 // the server-only code already lives (http.ts, rate-limit.ts, validate.ts), so the schema
 // follows that convention. Migrations are plain, reviewable SQL committed to `./drizzle`
